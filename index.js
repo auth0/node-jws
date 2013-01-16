@@ -2,26 +2,57 @@ const util = require('util');
 const base64url = require('base64url');
 const crypto = require('crypto');
 
+
 exports.sign = function jwsSign() {
-  const opts = {};
-  if (typeof arguments[0] === 'object')
-    return jwsSign(arguments[0]);
   if (arguments.length === 2) {
-    opts.header = { alg : 'HS256' };
-    opts.payload = arguments[0];
-    opts.secret = arguments[1];
-    return jwsHS256Sign(opts);
+    var payload = arguments[0];
+    const secretOrKey = arguments[1].toString();
+    const header = { };
+    if (typeof payload === 'object')
+      payload = JSON.stringify(payload);
+    if (isPrivateKey(secretOrKey))
+      return jwsRS256Sign(header, payload, secretOrKey);
+    return jwsHS256Sign(header, payload, secretOrKey);
   }
 }
 
-function jwsHS256Sign(opts) {
-  var payload = opts.payload;
-  if (typeof opts.payload === 'object')
-    payload = JSON.stringify(opts.payload);
-  const secret = opts.secret;
-  const header = JSON.stringify(opts.header);
+function jwsSecuredInput(header, payload) {
+  const encodedHeader = base64url(header);
+  const encodedPayload = base64url(payload);
+  return util.format('%s.%s', encodedHeader, encodedPayload);
+}
+
+function isPrivateKey(secretOrKey) {
+  const RSA_INDICATOR = '-----BEGIN RSA PRIVATE KEY-----';
+  return secretOrKey.indexOf(RSA_INDICATOR) === 0;
+}
+
+function jwsRS256Sign(header, payload, key) {
+  header.alg = 'RS256';
+  header = JSON.stringify(header);
+  const signature = createRS256Signature(header, payload, key);
+  return jwsOutput(header, payload, signature);
+}
+
+function createRS256Signature(header, payload, key) {
+  const signer = crypto.createSign('RSA-SHA256', key);
+  const securedInput = jwsSecuredInput(header, payload);
+  const signature = (signer.update(securedInput), signer.sign(key, 'base64'));
+  return base64url.fromBase64(signature);
+}
+
+function jwsHS256Sign(header, payload, secret) {
+  header.alg = 'HS256';
+  header = JSON.stringify(header);
   const signature = createHS256Signature(header, payload, secret);
   return jwsOutput(header, payload, signature);
+}
+
+function createHS256Signature(header, payload, secret) {
+  const hmac = crypto.createHmac('SHA256', secret);
+  const securedInput = jwsSecuredInput(header, payload);
+  const signature = (hmac.update(securedInput), hmac.digest('base64'));
+  return base64url.fromBase64(signature);
 }
 
 function jwsOutput(header, payload, signature) {
@@ -32,18 +63,7 @@ function jwsOutput(header, payload, signature) {
     signature);
 }
 
-function createHS256Signature(header, payload, secret) {
-  const hmac = crypto.createHmac('SHA256', secret);
-  const encodedHeader = base64url(header);
-  const encodedPayload = base64url(payload);
-  hmac.update(encodedHeader);
-  hmac.update('.');
-  hmac.update(encodedPayload);
-  const signature = hmac.digest('base64');
-  return base64url.fromBase64(signature);
-}
-
-exports.verify = function jwsVerify(jwsObject, keyOrSecret) {
+exports.verify = function jwsVerify(jwsObject, secretOrKey) {
   const parts = jwsObject.split('.');
   const encodedHeader = parts[0];
   const encodedPayload = parts[1];
@@ -51,12 +71,24 @@ exports.verify = function jwsVerify(jwsObject, keyOrSecret) {
   const rawHeader = base64url.decode(encodedHeader);
   const payload = base64url.decode(encodedPayload);
   const header = JSON.parse(rawHeader);
-  if (header.alg === 'HS256')
-    return jwsHS256Verify(rawHeader, payload, keyOrSecret, encodedSignature)
+  const verifiers = {
+    HS256: jwsHS256Verify,
+    RS256: jwsRS256Verify
+  };
+  const verifierFn = verifiers[header.alg];
+  return verifierFn(rawHeader, payload, secretOrKey, encodedSignature)
 }
 
 function jwsHS256Verify(header, payload, secret, expectedSignature) {
   const calculatedSignature =
     createHS256Signature(header, payload, secret);
   return expectedSignature === calculatedSignature;
+}
+
+function jwsRS256Verify(header, payload, publicKey, signature) {
+  const verifier = crypto.createVerify('RSA-SHA256');
+  const securedInput = jwsSecuredInput(header, payload);
+  signature = base64url.toBase64(signature);
+  verifier.update(securedInput);
+  return verifier.verify(publicKey, signature, 'base64');
 }
