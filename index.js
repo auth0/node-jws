@@ -2,17 +2,32 @@ const util = require('util');
 const base64url = require('base64url');
 const crypto = require('crypto');
 
-
 exports.sign = function jwsSign() {
+  var opts, header, payload, secretOrKey;
   if (arguments.length === 2) {
-    var payload = arguments[0];
-    const secretOrKey = arguments[1].toString();
-    const header = { };
+    secretOrKey = arguments[1];
+    header = (isPrivateKey(secretOrKey)
+              ? { alg: 'RS256' }
+              : { alg: 'HS256' });
+    return jwsSign({
+      header: header,
+      payload: arguments[0],
+      secret: secretOrKey,
+    });
+  }
+
+  if (arguments.length === 1) {
+    opts = arguments[0];
+    header = opts.header;
+    payload = opts.payload;
     if (typeof payload === 'object')
       payload = JSON.stringify(payload);
-    if (isPrivateKey(secretOrKey))
-      return jwsRS256Sign(header, payload, secretOrKey);
-    return jwsHS256Sign(header, payload, secretOrKey);
+    const signers = {
+      HS256: jwsHS256Sign,
+      RS256: jwsRS256Sign,
+    };
+    const signerFn = signers[header.alg];
+    return signerFn(header, payload, (opts.secret || opts.key))
   }
 }
 
@@ -24,7 +39,7 @@ function jwsSecuredInput(header, payload) {
 
 function isPrivateKey(secretOrKey) {
   const RSA_INDICATOR = '-----BEGIN RSA PRIVATE KEY-----';
-  return secretOrKey.indexOf(RSA_INDICATOR) === 0;
+  return secretOrKey.toString().indexOf(RSA_INDICATOR) === 0;
 }
 
 function jwsRS256Sign(header, payload, key) {
