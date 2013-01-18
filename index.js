@@ -6,9 +6,9 @@ exports.sign = function jwsSign() {
   var opts, header, payload, secretOrKey;
   if (arguments.length === 2) {
     secretOrKey = arguments[1];
-    header = (isPrivateKey(secretOrKey)
-              ? { alg: 'RS256' }
-              : { alg: 'HS256' });
+    header = {
+      alg: algorithmFromSecret(secretOrKey)
+    };
     return jwsSign({
       header: header,
       payload: arguments[0],
@@ -25,6 +25,8 @@ exports.sign = function jwsSign() {
     const signers = {
       HS256: jwsHS256Sign,
       RS256: jwsRS256Sign,
+      EC256: jwsEC256Sign,
+      none: jwsNoneSign,
     };
     const signerFn = signers[header.alg];
     return signerFn(header, payload, (opts.secret || opts.key))
@@ -37,13 +39,31 @@ function jwsSecuredInput(header, payload) {
   return util.format('%s.%s', encodedHeader, encodedPayload);
 }
 
-function isPrivateKey(secretOrKey) {
+function algorithmFromSecret(secretOrKey) {
+  secretOrKey = secretOrKey.toString();
   const RSA_INDICATOR = '-----BEGIN RSA PRIVATE KEY-----';
-  return secretOrKey.toString().indexOf(RSA_INDICATOR) === 0;
+  const EC_INDICATOR = '-----BEGIN EC PRIVATE KEY-----';
+  if (secretOrKey.indexOf(RSA_INDICATOR) > -1)
+    return 'RS256';
+  if (secretOrKey.indexOf(EC_INDICATOR) > -1)
+    return 'EC256';
+  return 'HS256';
+}
+
+function jwsNoneSign(header, payload) {
+  header = JSON.stringify(header);
+  return jwsOutput(header, payload, '');
+}
+
+// The latest version of openssl doesn't yet support `ecdsa-with-sha256`
+// as a message digest algorithm, only `ecdsa-with-sha1` (despite the
+// fact it supports both separately). Once that is implemented, we can
+// implement this.
+function jwsEC256Sign(header, payload, key) {
+  throw "Not implemented, yet";
 }
 
 function jwsRS256Sign(header, payload, key) {
-  header.alg = 'RS256';
   header = JSON.stringify(header);
   const signature = createRS256Signature(header, payload, key);
   return jwsOutput(header, payload, signature);
@@ -57,7 +77,6 @@ function createRS256Signature(header, payload, key) {
 }
 
 function jwsHS256Sign(header, payload, secret) {
-  header.alg = 'HS256';
   header = JSON.stringify(header);
   const signature = createHS256Signature(header, payload, secret);
   return jwsOutput(header, payload, signature);
@@ -88,7 +107,8 @@ exports.verify = function jwsVerify(jwsObject, secretOrKey) {
   const header = JSON.parse(rawHeader);
   const verifiers = {
     HS256: jwsHS256Verify,
-    RS256: jwsRS256Verify
+    RS256: jwsRS256Verify,
+    none: jwsNoneVerify,
   };
   const verifierFn = verifiers[header.alg];
   return verifierFn(rawHeader, payload, secretOrKey, encodedSignature)
@@ -107,3 +127,6 @@ function jwsRS256Verify(header, payload, publicKey, signature) {
   verifier.update(securedInput);
   return verifier.verify(publicKey, signature, 'base64');
 }
+
+function jwsNoneVerify() { return true };
+exports.validate = exports.verify;
