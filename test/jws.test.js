@@ -4,12 +4,12 @@ const crypto = require('crypto');
 const test = require('tap').test;
 const jws = require('..');
 
-const testRSAPrivateKey = fs.readFileSync('./rsa-private.pem').toString();
-const testRSAPublicKey = fs.readFileSync('./rsa-public.pem').toString();
-const testRSAWrongPublicKey = fs.readFileSync('./rsa-wrong-public.pem').toString();
-const testEC256PrivateKey = fs.readFileSync('./ec256-private.pem').toString();
-const testEC256PublicKey = fs.readFileSync('./ec256-public.pem').toString();
-const testEC256WrongPublicKey = fs.readFileSync('./ec256-wrong-public.pem').toString();
+const testRSAPrivateKey = fs.readFileSync(__dirname + '/rsa-private.pem').toString();
+const testRSAPublicKey = fs.readFileSync(__dirname + '/rsa-public.pem').toString();
+const testRSAWrongPublicKey = fs.readFileSync(__dirname + '/rsa-wrong-public.pem').toString();
+const testEC256PrivateKey = fs.readFileSync(__dirname + '/ec256-private.pem').toString();
+const testEC256PublicKey = fs.readFileSync(__dirname + '/ec256-public.pem').toString();
+const testEC256WrongPublicKey = fs.readFileSync(__dirname + '/ec256-wrong-public.pem').toString();
 const RSA_INDICATOR = '-----BEGIN RSA PRIVATE KEY-----';
 
 test('HS256 algorithm implicit, signing', function (t) {
@@ -57,8 +57,6 @@ test('RS256 algorithm implicit, signing', function (t) {
 test('RS256 algorithm implicit, verifying', function (t) {
   const payload = 'hallo';
   const jwsObject = jws.sign(payload, testRSAPrivateKey);
-
-  console.dir(jwsObject);
 
   const verified = jws.verify(jwsObject, testRSAPublicKey);
   t.ok(verified, 'should be verified');
@@ -164,6 +162,30 @@ test('no algorithm explicit, verifying', function (t) {
     payload: expectedPayload,
   });
 
-  t.ok(jws.verify(jwsObject), 'should verify');
+  t.ok(jws.verify(jwsObject, 'anything at all'), 'should verify');
+  t.end();
+});
+
+test('verifying without a secret or key should fail early', function (t) {
+  const jwsObject = jws.sign('wut', 'lol');
+  try {
+    jws.verify(jwsObject);
+    t.fail('should have thrown');
+  } catch(exception) {
+    t.ok(exception instanceof TypeError, 'should be a type error');
+    t.pass('threw exception');
+  }
+  t.end();
+});
+
+test('verifying without a proper jwsObject should fail', function (t) {
+  try {
+    jws.verify('not a jws', 'secret');
+    t.fail('should have thrown');
+  } catch(exception) {
+    console.dir(exception);
+    t.ok(exception instanceof TypeError, 'should be a type error');
+    t.pass('threw exception');
+  }
   t.end();
 });

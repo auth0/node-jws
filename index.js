@@ -98,6 +98,10 @@ function jwsOutput(header, payload, signature) {
 }
 
 exports.verify = function jwsVerify(jwsObject, secretOrKey) {
+  if (!secretOrKey)
+    throw TypeError('jws.verify requires two arguments, a JWS object and a secret');
+  if (!isValidJws(jwsObject))
+    throw TypeError('jws.verify requires a valid JWS object for the first argument')
   const parts = jwsObject.split('.');
   const encodedHeader = parts[0];
   const encodedPayload = parts[1];
@@ -112,6 +116,15 @@ exports.verify = function jwsVerify(jwsObject, secretOrKey) {
   };
   const verifierFn = verifiers[header.alg];
   return verifierFn(rawHeader, payload, secretOrKey, encodedSignature)
+}
+
+function isValidJws(string) {
+  const jwsObjRe = /.+\..+\..*/;
+  if (typeof string !== 'string')
+    return false;
+  if (!string.match(jwsObjRe))
+    return false;
+  return true;
 }
 
 function jwsHS256Verify(header, payload, secret, expectedSignature) {
