@@ -141,5 +141,24 @@ function jwsRS256Verify(header, payload, publicKey, signature) {
   return verifier.verify(publicKey, signature, 'base64');
 }
 
+exports.decode = function jwsDecode(jwsObject) {
+  if (!isValidJws(jwsObject))
+    throw TypeError('jws.decode requires a valid JWS object for the first argument')
+  const parts = jwsObject.split('.');
+  const encodedHeader = parts[0];
+  const encodedPayload = parts[1];
+  const encodedSignature = parts[2];
+  const header = JSON.parse(base64url.decode(encodedHeader));
+  const signature = Buffer(base64url.toBase64(encodedSignature), 'base64');
+  var payload = base64url.decode(encodedPayload);
+  if (header.typ && header.typ.match(/^jwt$/i))
+    payload = JSON.parse(payload);
+  return {
+    header: header,
+    payload: payload,
+    signature: signature
+  };
+};
+
 function jwsNoneVerify() { return true };
 exports.validate = exports.verify;

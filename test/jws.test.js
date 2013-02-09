@@ -189,3 +189,27 @@ test('verifying without a proper jwsObject should fail', function (t) {
   }
   t.end();
 });
+
+test('jws.decode: normal', function (t) {
+  const expectedPayload = { spumpkins: 'siamese dream' };
+  const expectedHeader = { alg: 'HS256' };
+  const jwsObject = jws.sign(expectedPayload, 'shhhhhh');
+  const parts = jws.decode(jwsObject);
+  t.same(parts.header, expectedHeader, 'should have right header');
+  t.same(JSON.parse(parts.payload), expectedPayload, 'should have right payload');
+  t.end();
+});
+
+test('jws.decode: specify JWT type', function (t) {
+  const expectedPayload = { spumpkins: 'siamese dream' };
+  const expectedHeader = { alg: 'HS256', typ: 'JWT' };
+  const jwsObject = jws.sign({
+    header: expectedHeader,
+    payload: expectedPayload,
+    secret: 'shhhhhh'
+  });
+  const parts = jws.decode(jwsObject);
+  t.same(parts.header, expectedHeader, 'should have right header');
+  t.same(parts.payload, expectedPayload, 'should have right payload');
+  t.end();
+});
