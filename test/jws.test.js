@@ -4,212 +4,109 @@ const crypto = require('crypto');
 const test = require('tap').test;
 const jws = require('..');
 
-const testRSAPrivateKey = fs.readFileSync(__dirname + '/rsa-private.pem').toString();
-const testRSAPublicKey = fs.readFileSync(__dirname + '/rsa-public.pem').toString();
-const testRSAWrongPublicKey = fs.readFileSync(__dirname + '/rsa-wrong-public.pem').toString();
-const testEC256PrivateKey = fs.readFileSync(__dirname + '/ec256-private.pem').toString();
-const testEC256PublicKey = fs.readFileSync(__dirname + '/ec256-public.pem').toString();
-const testEC256WrongPublicKey = fs.readFileSync(__dirname + '/ec256-wrong-public.pem').toString();
-const RSA_INDICATOR = '-----BEGIN RSA PRIVATE KEY-----';
+function readfile(path) {
+  return fs.readFileSync(__dirname + '/' + path).toString();
+}
 
-test('HS256 algorithm implicit, signing', function (t) {
-  const secret = 'sup';
-  const expectedPayload = 'oh hey';
-  const expectedHeader = { alg: 'HS256' };
+const rsaPrivateKey = readfile('rsa-private.pem');
+const rsaPublicKey = readfile('rsa-public.pem');
+const rsaWrongPublicKey = readfile('rsa-wrong-public.pem');
+const ecdsaPrivateKey = {
+  '256': readfile('ec256-private.pem'),
+  '384': readfile('ec384-private.pem'),
+  '512': readfile('ec512-private.pem'),
+};
+const ecdsaPublicKey = {
+  '256': readfile('ec256-public.pem'),
+  '384': readfile('ec384-public.pem'),
+  '512': readfile('ec512-public.pem'),
+};
+const ecdsaWrongPublicKey = {
+  '256': readfile('ec256-wrong-public.pem'),
+  '384': readfile('ec384-wrong-public.pem'),
+  '512': readfile('ec512-wrong-public.pem'),
+};
 
-  const jwsObject = jws.sign(expectedPayload, secret);
-  const parts = jwsObject.split('.');
-  const header = JSON.parse(base64url.decode(parts[0]));
-  const payload = base64url.decode(parts[1]);
+const BITS = ['256', '384', '512'];
+const CURVES = {
+  '256': '256',
+  '384': '384',
+  '512': '521',
+};
 
-  t.same(payload, expectedPayload, 'payload should match');
-  t.same(header, expectedHeader, 'header should match');
-  t.end();
-});
-
-test('HS256 algorithm implicit, verifying', function (t) {
-  const payload = 'oh hey';
-  const secret = 'sup';
-  const jwsObject = jws.sign(payload, secret);
-
-  const verified = jws.verify(jwsObject, secret);
-  t.ok(verified, 'should be verified');
-
-  const notVerified = jws.verify(jwsObject, 'some other thing');
-  t.notOk(notVerified, 'should not be verified');
-  t.end();
-});
-
-test('RS256 algorithm implicit, signing', function (t) {
-  const expectedPayload = 'oh hi friends!';
-  const expectedHeader = { alg: 'RS256' };
-
-  const jwsObject = jws.sign(expectedPayload, testRSAPrivateKey);
-  const parts = jwsObject.split('.');
-  const header = JSON.parse(base64url.decode(parts[0]));
-  const payload = base64url.decode(parts[1]);
-
-  t.same(payload, expectedPayload, 'payload should match');
-  t.same(header, expectedHeader, 'header should match');
-  t.end();
-});
-
-test('RS256 algorithm implicit, verifying', function (t) {
-  const payload = 'hallo';
-  const jwsObject = jws.sign(payload, testRSAPrivateKey);
-
-  const verified = jws.verify(jwsObject, testRSAPublicKey);
-  t.ok(verified, 'should be verified');
-
-  const notVerified = jws.verify(jwsObject, testRSAWrongPublicKey);
-  t.notOk(notVerified, 'should not be verified');
-  t.end();
-});
-
-test('ES256 algorithm implicit, signing', {skip: true}, function (t) {
-  const expectedPayload = { spumpkins: 'siamese dream' };
-  const expectedHeader = { alg: 'EC256' };
-
-  const jwsObject = jws.sign(expectedPayload, testEC256PrivateKey);
-  const parts = jwsObject.split('.');
-  const header = JSON.parse(base64url.decode(parts[0]));
-  const payload = base64url.decode(parts[1]);
-
-  t.same(payload, expectedPayload, 'payload should match');
-  t.same(header, expectedHeader, 'header should match');
-  t.end();
-});
-
-test('HS256 algorithm explicit, signing', function (t) {
-  const secret = RSA_INDICATOR;
-  const expectedPayload = 'oh hey';
-  const expectedHeader = {
-    alg: 'HS256',
-    typ: 'JWT',
-    hiFives: true
-  };
-  const jwsObject = jws.sign({
-    header: expectedHeader,
-    payload: expectedPayload,
-    secret: RSA_INDICATOR,
+BITS.forEach(function (bits) {
+  test('HMAC using SHA-'+bits+' hash algorithm', function (t) {
+    const header = { alg: 'HS'+bits, typ: 'JWT' };
+    const payload = {name: 'oh hey', value: ['one', 2, 3]};
+    const secret = 'sup';
+    const jwsObj = jws.sign({
+      header: header,
+      payload: payload,
+      secret: secret
+    });
+    const parts = jws.decode(jwsObj);
+    t.ok(jws.verify(jwsObj, secret), 'should verify');
+    t.notOk(jws.verify(jwsObj, 'something else'), 'should not verify');
+    t.same(parts.payload, payload, 'should match payload');
+    t.same(parts.header, header, 'should match header');
+    t.end();
   });
-  const parts = jwsObject.split('.');
-  const header = JSON.parse(base64url.decode(parts[0]));
-  const payload = base64url.decode(parts[1]);
-
-  t.same(payload, expectedPayload, 'payload should match');
-  t.same(header, expectedHeader, 'header should match');
-  t.end();
 });
 
-test('no algorithm explicit, signing', function (t) {
-  const secret = RSA_INDICATOR;
-  const expectedPayload = 'oh hey';
-  const expectedHeader = {
-    alg: 'none',
-    typ: 'JWT',
-    hiFives: true
-  };
-  const jwsObject = jws.sign({
-    header: expectedHeader,
-    payload: expectedPayload,
+BITS.forEach(function (bits) {
+  test('RSASSA using SHA-'+bits+' hash algorithm', function (t) {
+    const header = { alg: 'RS'+bits };
+    const payload = {name: 'oh hey', value: ['one', 2, 3]};
+    const privateKey = rsaPrivateKey;
+    const publicKey = rsaPublicKey;
+    const wrongPublicKey = rsaWrongPublicKey;
+    const jwsObj = jws.sign({
+      header: header,
+      payload: payload,
+      privateKey: privateKey
+    });
+    const parts = jws.decode(jwsObj, { json: true });
+    t.ok(jws.verify(jwsObj, publicKey), 'should verify');
+    t.notOk(jws.verify(jwsObj, wrongPublicKey), 'should not verify');
+    t.same(parts.payload, payload, 'should match payload');
+    t.same(parts.header, header, 'should match header');
+    t.end();
   });
-
-  const parts = jwsObject.split('.');
-  const header = JSON.parse(base64url.decode(parts[0]));
-  const payload = base64url.decode(parts[1]);
-
-  t.same(payload, expectedPayload, 'payload should match');
-  t.same(header, expectedHeader, 'header should match');
-  t.ok(jwsObject.match(/\.$/), 'should end with a dot');
-  t.end();
 });
 
-test('no algorithm explicit, signing', function (t) {
-  const secret = RSA_INDICATOR;
-  const expectedPayload = 'oh hey';
-  const expectedHeader = {
-    alg: 'none',
-    typ: 'JWT',
-    hiFives: true
-  };
-  const jwsObject = jws.sign({
-    header: expectedHeader,
-    payload: expectedPayload,
+BITS.forEach(function (bits) {
+  const curve = CURVES[bits];
+  test('ECDSA using P-'+curve+' curve and SHA-'+bits+' hash algorithm', function (t) {
+    const header = { alg: 'ES'+bits };
+    const payload = 'oh hey';
+    const privateKey = ecdsaPrivateKey['256'];
+    const publicKey = ecdsaPublicKey['256'];
+    const wrongPublicKey = ecdsaWrongPublicKey['256'];
+    const jwsObj = jws.sign({
+      header: header,
+      payload: payload,
+      privateKey: privateKey
+    });
+    const parts = jws.decode(jwsObj);
+    t.ok(jws.verify(jwsObj, publicKey), 'should verify');
+    t.notOk(jws.verify(jwsObj, wrongPublicKey), 'should not verify');
+    t.same(parts.payload, payload, 'should match payload');
+    t.same(parts.header, header, 'should match header');
+    t.end();
   });
-
-  const parts = jwsObject.split('.');
-  const header = JSON.parse(base64url.decode(parts[0]));
-  const payload = base64url.decode(parts[1]);
-
-  t.same(payload, expectedPayload, 'payload should match');
-  t.same(header, expectedHeader, 'header should match');
-  t.ok(jwsObject.match(/\.$/), 'should end with a dot');
-  t.end();
 });
 
-test('no algorithm explicit, verifying', function (t) {
-  const secret = RSA_INDICATOR;
-  const expectedPayload = 'oh hey';
-  const expectedHeader = {
-    alg: 'none',
-    typ: 'JWT',
-    hiFives: true
-  };
-
-  const jwsObject = jws.sign({
-    header: expectedHeader,
-    payload: expectedPayload,
-  });
-
-  t.ok(jws.verify(jwsObject, 'anything at all'), 'should verify');
-  t.end();
-});
-
-test('verifying without a secret or key should fail early', function (t) {
-  const jwsObject = jws.sign('wut', 'lol');
-  try {
-    jws.verify(jwsObject);
-    t.fail('should have thrown');
-  } catch(exception) {
-    t.ok(exception instanceof TypeError, 'should be a type error');
-    t.pass('threw exception');
-  }
-  t.end();
-});
-
-test('verifying without a proper jwsObject should fail', function (t) {
-  try {
-    jws.verify('not a jws', 'secret');
-    t.fail('should have thrown');
-  } catch(exception) {
-    console.dir(exception);
-    t.ok(exception instanceof TypeError, 'should be a type error');
-    t.pass('threw exception');
-  }
-  t.end();
-});
-
-test('jws.decode: normal', function (t) {
-  const expectedPayload = { spumpkins: 'siamese dream' };
-  const expectedHeader = { alg: 'HS256' };
-  const jwsObject = jws.sign(expectedPayload, 'shhhhhh');
-  const parts = jws.decode(jwsObject);
-  t.same(parts.header, expectedHeader, 'should have right header');
-  t.same(JSON.parse(parts.payload), expectedPayload, 'should have right payload');
-  t.end();
-});
-
-test('jws.decode: specify JWT type', function (t) {
-  const expectedPayload = { spumpkins: 'siamese dream' };
-  const expectedHeader = { alg: 'HS256', typ: 'JWT' };
-  const jwsObject = jws.sign({
-    header: expectedHeader,
-    payload: expectedPayload,
-    secret: 'shhhhhh'
-  });
-  const parts = jws.decode(jwsObject);
-  t.same(parts.header, expectedHeader, 'should have right header');
-  t.same(parts.payload, expectedPayload, 'should have right payload');
-  t.end();
+test('No digital signature or MAC value included', function (t) {
+    const header = { alg: 'none' };
+    const payload = 'oh hey';
+    const jwsObj = jws.sign({
+      header: header,
+      payload: payload,
+    });
+    const parts = jws.decode(jwsObj);
+    t.ok(jws.verify(jwsObj), 'should verify');
+    t.ok(jws.verify(jwsObj, 'anything'), 'should still verify');
+    t.same(parts.payload, payload, 'should match payload');
+    t.same(parts.header, header, 'should match header');
+    t.end();
 });
