@@ -8,6 +8,10 @@ function readfile(path) {
   return fs.readFileSync(__dirname + '/' + path).toString();
 }
 
+function readstream(path) {
+  return fs.createReadStream(__dirname + '/' + path);
+}
+
 const rsaPrivateKey = readfile('rsa-private.pem');
 const rsaPublicKey = readfile('rsa-public.pem');
 const rsaWrongPublicKey = readfile('rsa-wrong-public.pem');
@@ -97,16 +101,109 @@ BITS.forEach(function (bits) {
 });
 
 test('No digital signature or MAC value included', function (t) {
-    const header = { alg: 'none' };
-    const payload = 'oh hey';
-    const jwsObj = jws.sign({
-      header: header,
-      payload: payload,
-    });
-    const parts = jws.decode(jwsObj);
-    t.ok(jws.verify(jwsObj), 'should verify');
-    t.ok(jws.verify(jwsObj, 'anything'), 'should still verify');
-    t.same(parts.payload, payload, 'should match payload');
-    t.same(parts.header, header, 'should match header');
+  const header = { alg: 'none' };
+  const payload = 'oh hey';
+  const jwsObj = jws.sign({
+    header: header,
+    payload: payload,
+  });
+  const parts = jws.decode(jwsObj);
+  t.ok(jws.verify(jwsObj), 'should verify');
+  t.ok(jws.verify(jwsObj, 'anything'), 'should still verify');
+  t.same(parts.payload, payload, 'should match payload');
+  t.same(parts.header, header, 'should match header');
+  t.end();
+});
+
+test('Streaming sign: HMAC', function (t) {
+  const dataStream = readstream('data.txt');
+  const secret = 'shhhhh';
+  const sig = jws.createSign({
+    header: { alg: 'HS256' },
+    secret: secret
+  });
+  dataStream.pipe(sig.payload);
+  sig.on('done', function (signature) {
+    t.ok(jws.verify(signature, secret), 'should verify');
     t.end();
+  });
+});
+
+test('Streaming sign: RSA', function (t) {
+  const dataStream = readstream('data.txt');
+  const privateKeyStream = readstream('rsa-private.pem');
+  const publicKey = rsaPublicKey;
+  const wrongPublicKey = rsaWrongPublicKey;
+  const sig = jws.createSign({
+    header: { alg: 'RS256' },
+  });
+  dataStream.pipe(sig.payload);
+
+  process.nextTick(function () {
+    privateKeyStream.pipe(sig.key);
+  });
+
+  sig.on('done', function (signature) {
+    t.ok(jws.verify(signature, publicKey), 'should verify');
+    t.notOk(jws.verify(signature, wrongPublicKey), 'should not verify');
+    t.same(jws.decode(signature).payload, readfile('data.txt'), 'got all the data');
+    t.end();
+  });
+});
+
+test('Streaming sign: RSA, predefined streams', function (t) {
+  const dataStream = readstream('data.txt');
+  const privateKeyStream = readstream('rsa-private.pem');
+  const publicKey = rsaPublicKey;
+  const wrongPublicKey = rsaWrongPublicKey;
+  const sig = jws.createSign({
+    header: { alg: 'RS256' },
+    payload: dataStream,
+    privateKey: privateKeyStream
+  });
+  sig.on('done', function (signature) {
+    t.ok(jws.verify(signature, publicKey), 'should verify');
+    t.notOk(jws.verify(signature, wrongPublicKey), 'should not verify');
+    t.same(jws.decode(signature).payload, readfile('data.txt'), 'got all the data');
+    t.end();
+  });
+});
+
+test('Streaming verify: ECDSA', function (t) {
+  const dataStream = readstream('data.txt');
+  const privateKeyStream = readstream('ec512-private.pem');
+  const publicKeyStream = readstream('ec512-public.pem');
+  const sigStream = jws.createSign({
+    header: { alg: 'ES512' },
+    payload: dataStream,
+    privateKey: privateKeyStream
+  });
+  const verifier = jws.createVerify();
+  sigStream.pipe(verifier.signature);
+  publicKeyStream.pipe(verifier.key);
+
+  verifier.on('done', function (verified) {
+    t.ok(verified, 'should verify');
+    t.end();
+  });
+});
+
+test('Streaming verify: ECDSA, with invalid key', function (t) {
+  const dataStream = readstream('data.txt');
+  const privateKeyStream = readstream('ec512-private.pem');
+  const publicKeyStream = readstream('ec512-wrong-public.pem');
+  const sigStream = jws.createSign({
+    header: { alg: 'ES512' },
+    payload: dataStream,
+    privateKey: privateKeyStream
+  });
+  const verifier = jws.createVerify({
+    signature: sigStream,
+    publicKey: publicKeyStream,
+  });
+
+  verifier.on('done', function (verified) {
+    t.notOk(verified, 'should not verify');
+    t.end();
+  });
 });

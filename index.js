@@ -1,3 +1,4 @@
+const Stream = require('stream');
 const util = require('util');
 const base64url = require('base64url');
 const crypto = require('crypto');
@@ -59,6 +60,7 @@ function isValidJws(string) {
 }
 
 function jwsVerify(jwsSig, secretOrKey) {
+  jwsSig = toString(jwsSig);
   const signature = signatureFromJWS(jwsSig);
   const securedInput = securedInputFromJWS(jwsSig);
   const algo = jwa(algoFromJWS(jwsSig));
@@ -82,16 +84,101 @@ exports.sign = jwsSign;
 exports.verify = jwsVerify;
 exports.decode = jwsDecode;
 
+exports.createSign = function createSign(opts) {
+  return new StreamSign(opts);
+};
+exports.createVerify = function createVerify(opts) {
+  return new StreamVerify(opts);
+};
 
-function algorithmFromSecret(secretOrKey) {
-  secretOrKey = secretOrKey.toString();
-  const RSA_INDICATOR = '-----BEGIN RSA PRIVATE KEY-----';
-  const EC_INDICATOR = '-----BEGIN EC PRIVATE KEY-----';
-  if (secretOrKey.indexOf(RSA_INDICATOR) > -1)
-    return 'RS';
-  if (secretOrKey.indexOf(EC_INDICATOR) > -1)
-    return 'EC';
-  return 'HS';
+function StreamSign(opts) {
+  const secret = opts.secret||opts.privateKey||opts.key;
+  const secretStream = new StreamData(secret);
+  this.readable = true;
+  this.header = opts.header;
+  this.secret = this.privateKey = this.key = secretStream;
+  this.payload = new StreamData(opts.payload);
+  this.secret.once('close', function () {
+    if (!this.payload.writable && this.readable)
+      this.sign();
+  }.bind(this));
+
+  this.payload.once('close', function () {
+    if (!this.secret.writable && this.readable)
+      this.sign();
+  }.bind(this));
 }
+util.inherits(StreamSign, Stream);
+StreamSign.prototype.sign = function sign() {
+  const signature = jwsSign({
+    header: this.header,
+    payload: this.payload.buffer,
+    secret: this.secret.buffer,
+  });
+  this.emit('done', signature);
+  this.emit('data', signature);
+  this.emit('end');
+  this.readable = false;
+  return signature;
+};
 
+function StreamVerify(opts) {
+  opts = opts || {};
+  const secretOrKey = opts.secret||opts.publicKey||opts.key;
+  const secretStream = new StreamData(secretOrKey);
+  this.readable = true;
+  this.secret = this.publicKey = this.key = secretStream;
+  this.signature = new StreamData(opts.signature);
+  this.secret.once('close', function () {
+    if (!this.signature.writable && this.readable)
+      this.verify();
+  }.bind(this));
 
+  this.signature.once('close', function () {
+    if (!this.secret.writable && this.readable)
+      this.verify();
+  }.bind(this));
+}
+util.inherits(StreamVerify, Stream);
+StreamVerify.prototype.verify = function verify() {
+  const verified = jwsVerify(this.signature.buffer, this.key.buffer);
+  this.emit('done', verified);
+  this.emit('data', verified);
+  this.emit('end');
+  this.readable = false;
+  return verified;
+};
+
+function StreamData(data) {
+  this.buffer = Buffer(data||0);
+  this.writable = true;
+  this.readable = true;
+  if (!data)
+    return this;
+  if (typeof data.pipe === 'function')
+    data.pipe(this);
+  else if (data.length) {
+    this.writable = false;
+    process.nextTick(function () {
+      this.buffer = data;
+      this.emit('end', data);
+      this.readable = false;
+      this.emit('close');
+    }.bind(this));
+  }
+};
+util.inherits(StreamData, Stream);
+
+StreamData.prototype.write = function write(data) {
+  this.buffer = Buffer.concat([this.buffer, Buffer(data)]);
+  this.emit('data', data);
+};
+
+StreamData.prototype.end = function end(data) {
+  if (data)
+    this.write(data);
+  this.emit('end', data);
+  this.emit('close');
+  this.writable = false;
+  this.readable = false;
+};
