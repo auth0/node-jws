@@ -4,6 +4,12 @@ const base64url = require('base64url');
 const crypto = require('crypto');
 const jwa = require('jwa');
 
+const ALGORITHMS = [
+  'HS256', 'HS384', 'HS512',
+  'RS256', 'RS384', 'RS512',
+  'ES256', 'ES384', 'ES512',
+];
+
 function toString(obj) {
   if (typeof obj === 'string')
     return obj;
@@ -69,6 +75,7 @@ function jwsVerify(jwsSig, secretOrKey) {
 
 function jwsDecode(jwsSig, opts) {
   opts = opts || {};
+  jwsSig = toString(jwsSig);
   const header = headerFromJWS(jwsSig);
   var payload = payloadFromJWS(jwsSig);
   if (header.typ === 'JWT' || opts.json)
@@ -80,24 +87,13 @@ function jwsDecode(jwsSig, opts) {
   }
 }
 
-exports.sign = jwsSign;
-exports.verify = jwsVerify;
-exports.decode = jwsDecode;
-
-exports.createSign = function createSign(opts) {
-  return new StreamSign(opts);
-};
-exports.createVerify = function createVerify(opts) {
-  return new StreamVerify(opts);
-};
-
-function StreamSign(opts) {
+function SignStream(opts) {
   const secret = opts.secret||opts.privateKey||opts.key;
-  const secretStream = new StreamData(secret);
+  const secretStream = new DataStream(secret);
   this.readable = true;
   this.header = opts.header;
   this.secret = this.privateKey = this.key = secretStream;
-  this.payload = new StreamData(opts.payload);
+  this.payload = new DataStream(opts.payload);
   this.secret.once('close', function () {
     if (!this.payload.writable && this.readable)
       this.sign();
@@ -108,8 +104,8 @@ function StreamSign(opts) {
       this.sign();
   }.bind(this));
 }
-util.inherits(StreamSign, Stream);
-StreamSign.prototype.sign = function sign() {
+util.inherits(SignStream, Stream);
+SignStream.prototype.sign = function sign() {
   const signature = jwsSign({
     header: this.header,
     payload: this.payload.buffer,
@@ -122,13 +118,13 @@ StreamSign.prototype.sign = function sign() {
   return signature;
 };
 
-function StreamVerify(opts) {
+function VerifyStream(opts) {
   opts = opts || {};
   const secretOrKey = opts.secret||opts.publicKey||opts.key;
-  const secretStream = new StreamData(secretOrKey);
+  const secretStream = new DataStream(secretOrKey);
   this.readable = true;
   this.secret = this.publicKey = this.key = secretStream;
-  this.signature = new StreamData(opts.signature);
+  this.signature = new DataStream(opts.signature);
   this.secret.once('close', function () {
     if (!this.signature.writable && this.readable)
       this.verify();
@@ -139,17 +135,18 @@ function StreamVerify(opts) {
       this.verify();
   }.bind(this));
 }
-util.inherits(StreamVerify, Stream);
-StreamVerify.prototype.verify = function verify() {
-  const verified = jwsVerify(this.signature.buffer, this.key.buffer);
-  this.emit('done', verified);
-  this.emit('data', verified);
+util.inherits(VerifyStream, Stream);
+VerifyStream.prototype.verify = function verify() {
+  const valid = jwsVerify(this.signature.buffer, this.key.buffer);
+  const obj = jwsDecode(this.signature.buffer);
+  this.emit('done', valid, obj);
+  this.emit('data', valid);
   this.emit('end');
   this.readable = false;
-  return verified;
+  return valid;
 };
 
-function StreamData(data) {
+function DataStream(data) {
   this.buffer = Buffer(data||0);
   this.writable = true;
   this.readable = true;
@@ -167,18 +164,29 @@ function StreamData(data) {
     }.bind(this));
   }
 };
-util.inherits(StreamData, Stream);
+util.inherits(DataStream, Stream);
 
-StreamData.prototype.write = function write(data) {
+DataStream.prototype.write = function write(data) {
   this.buffer = Buffer.concat([this.buffer, Buffer(data)]);
   this.emit('data', data);
 };
 
-StreamData.prototype.end = function end(data) {
+DataStream.prototype.end = function end(data) {
   if (data)
     this.write(data);
   this.emit('end', data);
   this.emit('close');
   this.writable = false;
   this.readable = false;
+};
+
+exports.ALGORITHMS = ALGORITHMS;
+exports.sign = jwsSign;
+exports.verify = jwsVerify;
+exports.decode = jwsDecode;
+exports.createSign = function createSign(opts) {
+  return new SignStream(opts);
+};
+exports.createVerify = function createVerify(opts) {
+  return new VerifyStream(opts);
 };

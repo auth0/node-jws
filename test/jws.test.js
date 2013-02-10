@@ -181,9 +181,8 @@ test('Streaming verify: ECDSA', function (t) {
   const verifier = jws.createVerify();
   sigStream.pipe(verifier.signature);
   publicKeyStream.pipe(verifier.key);
-
-  verifier.on('done', function (verified) {
-    t.ok(verified, 'should verify');
+  verifier.on('done', function (valid) {
+    t.ok(valid, 'should verify');
     t.end();
   });
 });
@@ -201,9 +200,8 @@ test('Streaming verify: ECDSA, with invalid key', function (t) {
     signature: sigStream,
     publicKey: publicKeyStream,
   });
-
-  verifier.on('done', function (verified) {
-    t.notOk(verified, 'should not verify');
+  verifier.on('done', function (valid, obj) {
+    t.notOk(valid, 'should not verify');
     t.end();
   });
 });
