@@ -1,6 +1,6 @@
 {
   "name": "jws",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Implementation of JSON Web Signatures",
   "main": "index.js",
   "directories": {

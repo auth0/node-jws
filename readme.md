@@ -1,5 +1,14 @@
 # jws  [![Build Status](https://secure.travis-ci.org/brianloveswords/node-jws.png)](http://travis-ci.org/brianloveswords/node-jws)
 
+An implementation of [JSON Web Signatures](http://self-issued.info/docs/draft-ietf-jose-json-web-signature.html).
+
+This was developed against `draft-ietf-jose-json-web-signature-08` and
+implements the entire spec **except** X.509 Certificate Chain
+signing/verifying (patches welcome).
+
+There are both syncronous (`jws.sign`, `jws.verify`) and streaming
+(`jws.createSign`, `jws.createVerify`) APIs.
+
 # Install
 
 ```bash
@@ -189,6 +198,16 @@ passed a `signature` option to the constructor.
 
 A `Writable Stream` that expects a public key or secret. Do *not* use if you
 passed a `key` or `secret` option to the constructor.
+
+
+# TODO
+
+* It feels like there should be some convenience options/APIs for
+  defining the algorithm rather than having to define a header object
+  with `{ alg: 'es512' }` or whatever every time.
+
+* X.509 support, ugh
+
 
 # License
 
