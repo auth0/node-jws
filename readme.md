@@ -91,7 +91,7 @@ Options:
 
 * `header` (required)
 * `payload`
-* `key` || `publicKey` || `secret`
+* `key` || `privateKey` || `secret`
 
 Other than `header`, all options expect a string or a buffer when the
 value is known ahead of time, or a stream for convenience.
@@ -102,7 +102,7 @@ Example
 // This...
 jws.createSign({
   header: { alg: 'rs256' },
-  key: privateKeyStream,
+  privateKey: privateKeyStream,
   payload: payloadStream,
 }).on('done', function(signature) {
   // ... 
@@ -112,7 +112,7 @@ jws.createSign({
 const signer = jws.createSign(
   header: { alg: 'rs256' },
 );
-privateKeyStream.pipe(signer.key);
+privateKeyStream.pipe(signer.privateKey);
 payloadStream.pipe(signer.payload);
 signer.on('done', function(signature) {
   // ...
@@ -135,7 +135,7 @@ Example
 
 // This...
 jws.createVerify({
-  key: pubKeyStream,
+  publicKey: pubKeyStream,
   signature: sigStream,
 }).on('done', function(verified, obj) {
   // ... 
@@ -143,7 +143,7 @@ jws.createVerify({
 
 // is equivilant to this:
 const verifier = jws.createVerify();
-pubKeyStream.pipe(verifier.key);
+pubKeyStream.pipe(verifier.publicKey);
 sigStream.pipe(verifier.signature);
 verifier.on('done', function(verified, obj) {
   // ...
