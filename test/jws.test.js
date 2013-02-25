@@ -205,3 +205,9 @@ test('Streaming verify: ECDSA, with invalid key', function (t) {
     t.end();
   });
 });
+
+test('jws.decode: not a jws signature', function (t) {
+  const result = jws.decode('some garbage string');
+  t.same(result, false, 'should return false if it cannot decode');
+  t.end();
+});

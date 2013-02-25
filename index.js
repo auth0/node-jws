@@ -56,13 +56,9 @@ function payloadFromJWS(jwsSig) {
   return base64url.decode(payload);
 }
 
+const JWS_REGEX = /[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_])?/
 function isValidJws(string) {
-  const jwsObjRe = /.+\..+\..*/;
-  if (typeof string !== 'string')
-    return false;
-  if (!string.match(jwsObjRe))
-    return false;
-  return true;
+  return JWS_REGEX.test(string);
 }
 
 function jwsVerify(jwsSig, secretOrKey) {
@@ -76,6 +72,8 @@ function jwsVerify(jwsSig, secretOrKey) {
 function jwsDecode(jwsSig, opts) {
   opts = opts || {};
   jwsSig = toString(jwsSig);
+  if (!isValidJws(jwsSig))
+    return false;
   const header = headerFromJWS(jwsSig);
   var payload = payloadFromJWS(jwsSig);
   if (header.typ === 'JWT' || opts.json)
@@ -184,6 +182,7 @@ exports.ALGORITHMS = ALGORITHMS;
 exports.sign = jwsSign;
 exports.verify = jwsVerify;
 exports.decode = jwsDecode;
+exports.isValid = isValidJws;
 exports.createSign = function createSign(opts) {
   return new SignStream(opts);
 };
