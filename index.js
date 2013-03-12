@@ -18,6 +18,16 @@ function toString(obj) {
   return JSON.stringify(obj);
 }
 
+function merge(to, from) {
+  for (key in from)
+    to[key] = from[key];
+  return to;
+}
+
+function makeError(opts) {
+  return merge(new Error(opts.message||opts.code), opts);
+}
+
 function jwsSecuredInput(header, payload) {
   const encodedHeader = base64url(toString(header));
   const encodedPayload = base64url(toString(payload));
@@ -34,9 +44,20 @@ function jwsSign(opts) {
   return util.format('%s.%s', securedInput, signature);
 }
 
+function isObject(thing) {
+  return Object.prototype.toString.call(thing) === '[object Object]';
+}
+
+function safeJsonParse(thing) {
+  if (isObject(thing))
+    return thing;
+  try { return JSON.parse(thing) }
+  catch (e) { return undefined }
+}
+
 function headerFromJWS(jwsSig) {
   const encodedHeader = jwsSig.split('.', 1)[0];
-  return JSON.parse(base64url.decode(encodedHeader));
+  return safeJsonParse(base64url.decode(encodedHeader));
 }
 
 function securedInputFromJWS(jwsSig) {
@@ -56,9 +77,13 @@ function payloadFromJWS(jwsSig) {
   return base64url.decode(payload);
 }
 
-const JWS_REGEX = /[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_])?/
+const JWS_REGEX = /^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$/;
 function isValidJws(string) {
-  return JWS_REGEX.test(string);
+  if (!JWS_REGEX.test(string))
+    return false;
+  if (!headerFromJWS(string))
+    return false;
+  return true;
 }
 
 function jwsVerify(jwsSig, secretOrKey) {
@@ -73,8 +98,10 @@ function jwsDecode(jwsSig, opts) {
   opts = opts || {};
   jwsSig = toString(jwsSig);
   if (!isValidJws(jwsSig))
-    return false;
+    return null;
   const header = headerFromJWS(jwsSig);
+  if (!header)
+    return null;
   var payload = payloadFromJWS(jwsSig);
   if (header.typ === 'JWT' || opts.json)
     payload = JSON.parse(payload);

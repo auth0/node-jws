@@ -207,7 +207,30 @@ test('Streaming verify: ECDSA, with invalid key', function (t) {
 });
 
 test('jws.decode: not a jws signature', function (t) {
-  const result = jws.decode('some garbage string');
-  t.same(result, false, 'should return false if it cannot decode');
+  t.same(jws.decode('some garbage string'), null);
+  t.same(jws.decode('http://sub.domain.org'), null);
   t.end();
 });
+
+test('jws.decode: with a bogus header ', function (t) {
+  const header = Buffer('oh hei').toString('base64');
+  const payload = Buffer('sup').toString('base64');
+  const sig = header + '.' + payload + '.';
+  const parts = jws.decode(sig);
+  t.same(parts, null);
+  t.end();
+});
+
+test('jws.isValid', function (t) {
+  const valid = jws.sign({ header: { alg: 'hs256' }, payload: 'hi', secret: 'shhh' });
+  const invalid = (function(){
+    const header = Buffer('oh hei').toString('base64');
+    const payload = Buffer('sup').toString('base64');
+    return header + '.' + payload + '.';
+  })();
+  t.same(jws.isValid('http://sub.domain.org'), false);
+  t.same(jws.isValid(invalid), false);
+  t.same(jws.isValid(valid), true);
+  t.end();
+});
+
