@@ -65,7 +65,11 @@ function securedInputFromJWS(jwsSig) {
 }
 
 function algoFromJWS(jwsSig) {
-  return headerFromJWS(jwsSig).alg;
+  const header = headerFromJWS(jwsSig);
+  if (typeof header != 'object') {
+    throw new Error("Invalid token: no header in signature '" + jwsSig + "'");
+  }
+  return header.alg;
 }
 
 function signatureFromJWS(jwsSig) {
