@@ -19,7 +19,7 @@ function toString(obj) {
 }
 
 function merge(to, from) {
-  for (key in from)
+  for (var key in from)
     to[key] = from[key];
   return to;
 }
