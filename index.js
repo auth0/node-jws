@@ -28,9 +28,11 @@ function makeError(opts) {
   return merge(new Error(opts.message||opts.code), opts);
 }
 
-function jwsSecuredInput(header, payload) {
+function jwsSecuredInput(header, payload, opts) {
   const encodedHeader = base64url(toString(header));
-  const encodedPayload = base64url(toString(payload));
+  const encodedPayload = header.typ === 'JWT' || opts.json
+    ? base64url(JSON.stringify(payload))
+    : base64url(toString(payload));
   return util.format('%s.%s', encodedHeader, encodedPayload);
 }
 
@@ -39,7 +41,7 @@ function jwsSign(opts) {
   const payload = opts.payload;
   const secretOrKey = opts.secret || opts.privateKey;
   const algo = jwa(header.alg);
-  const securedInput = jwsSecuredInput(header, payload);
+  const securedInput = jwsSecuredInput(header, payload, opts);
   const signature = algo.sign(securedInput, secretOrKey);
   return util.format('%s.%s', securedInput, signature);
 }
