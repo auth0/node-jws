@@ -221,6 +221,13 @@ test('jws.decode: with a bogus header ', function (t) {
   t.end();
 });
 
+test('jws.decode: with JWS type in header and string payload', function (t) {
+  const payload = 'hi';
+  const sig = jws.sign({ header: { alg: 'hs256', typ: 'JWT'}, payload: payload, secret: 'shhh' });
+  t.same(jws.decode(sig).payload, payload);
+  t.end();
+});
+
 test('jws.isValid', function (t) {
   const valid = jws.sign({ header: { alg: 'hs256' }, payload: 'hi', secret: 'shhh' });
   const invalid = (function(){
