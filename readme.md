@@ -1,4 +1,4 @@
-# node-jws  [![Build Status](https://secure.travis-ci.org/brianloveswords/node-jws.png)](http://travis-ci.org/brianloveswords/node-jws)
+# node-jws [![Build Status](https://secure.travis-ci.org/brianloveswords/node-jws.png)](http://travis-ci.org/brianloveswords/node-jws)
 
 An implementation of [JSON Web Signatures](http://self-issued.info/docs/draft-ietf-jose-json-web-signature.html).
 
@@ -20,11 +20,11 @@ $ npm install jws
 ## jws.ALGORITHMS
 Array of supported algorithms. The following algorithms are currently supported.
 
-alg Parameter Value | Digital Signature or MAC Algorithm 
+alg Parameter Value | Digital Signature or MAC Algorithm
 ----------------|----------------------------
-HS256 | HMAC using SHA-256 hash algorithm 
-HS384 | HMAC using SHA-384 hash algorithm 
-HS512 | HMAC using SHA-512 hash algorithm 
+HS256 | HMAC using SHA-256 hash algorithm
+HS384 | HMAC using SHA-384 hash algorithm
+HS512 | HMAC using SHA-512 hash algorithm
 RS256 | RSASSA using SHA-256 hash algorithm
 RS384 | RSASSA using SHA-384 hash algorithm
 RS512 | RSASSA using SHA-512 hash algorithm
@@ -55,7 +55,7 @@ Example
 
 ```js
 const signature = jws.sign({
-  header: { alg: 'hs256' },
+  header: { alg: 'HS256' },
   payload: 'h. jon benjamin',
   secret: 'has a van',
 });
@@ -78,7 +78,7 @@ parts of the JWS Signature.
 
 Returns an object with three properties, e.g.
 ```js
-{ header: { alg: 'hs256' },
+{ header: { alg: 'HS256' },
   payload: 'h. jon benjamin',
   signature: 'YOWPewyGHKu4Y_0M_vtlEnNlqmFOclqp4Hy6hVHfFT4'
 }
@@ -101,11 +101,11 @@ Example
 
 // This...
 jws.createSign({
-  header: { alg: 'rs256' },
+  header: { alg: 'RS256' },
   privateKey: privateKeyStream,
   payload: payloadStream,
 }).on('done', function(signature) {
-  // ... 
+  // ...
 });
 
 // is equivilant to this:
@@ -138,7 +138,7 @@ jws.createVerify({
   publicKey: pubKeyStream,
   signature: sigStream,
 }).on('done', function(verified, obj) {
-  // ... 
+  // ...
 });
 
 // is equivilant to this:
@@ -193,7 +193,7 @@ of whether or not that signature was valid.
 ### verifier.signature
 A `Writable Stream` that expects a JWS Signature. Do *not* use if you
 passed a `signature` option to the constructor.
-   
+
 ### verifier.secret<br>verifier.key<br>verifier.publicKey
 
 A `Writable Stream` that expects a public key or secret. Do *not* use if you
@@ -204,7 +204,7 @@ passed a `key` or `secret` option to the constructor.
 
 * It feels like there should be some convenience options/APIs for
   defining the algorithm rather than having to define a header object
-  with `{ alg: 'es512' }` or whatever every time.
+  with `{ alg: 'ES512' }` or whatever every time.
 
 * X.509 support, ugh
 
