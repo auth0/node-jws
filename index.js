@@ -107,7 +107,7 @@ function jwsDecode(jwsSig, opts) {
   if (!header)
     return null;
   var payload = payloadFromJWS(jwsSig);
-  if (header.typ === 'JWT' || opts.json)
+  if (!header.typ || header.typ === 'JWT' || opts.json)
     payload = JSON.parse(payload);
   return {
     header: header,
