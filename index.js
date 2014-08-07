@@ -1,7 +1,8 @@
+/*global process, exports*/
+const Buffer = require('buffer').Buffer;
 const Stream = require('stream');
 const util = require('util');
 const base64url = require('base64url');
-const crypto = require('crypto');
 const jwa = require('jwa');
 
 const ALGORITHMS = [
@@ -16,16 +17,6 @@ function toString(obj) {
   if (typeof obj === 'number' || Buffer.isBuffer(obj))
     return obj.toString();
   return JSON.stringify(obj);
-}
-
-function merge(to, from) {
-  for (var key in from)
-    to[key] = from[key];
-  return to;
-}
-
-function makeError(opts) {
-  return merge(new Error(opts.message||opts.code), opts);
 }
 
 function jwsSecuredInput(header, payload) {
@@ -113,7 +104,7 @@ function jwsDecode(jwsSig, opts) {
     header: header,
     payload: payload,
     signature: signatureFromJWS(jwsSig),
-  }
+  };
 }
 
 function SignStream(opts) {
@@ -192,7 +183,7 @@ function DataStream(data) {
       this.emit('close');
     }.bind(this));
   }
-};
+}
 util.inherits(DataStream, Stream);
 
 DataStream.prototype.write = function write(data) {
