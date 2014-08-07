@@ -28,6 +28,6 @@
     "jwa": "0.0.1"
   },
   "devDependencies": {
-    "tap": "~0.3.3"
+    "tape": "~2.14.0"
   }
 }

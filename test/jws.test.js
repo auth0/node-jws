@@ -1,7 +1,7 @@
+/*global process*/
+const Buffer = require('buffer').Buffer;
 const fs = require('fs');
-const base64url = require('base64url');
-const crypto = require('crypto');
-const test = require('tap').test;
+const test = require('tape');
 const jws = require('..');
 
 function readfile(path) {
@@ -200,7 +200,7 @@ test('Streaming verify: ECDSA, with invalid key', function (t) {
     signature: sigStream,
     publicKey: publicKeyStream,
   });
-  verifier.on('done', function (valid, obj) {
+  verifier.on('done', function (valid) {
     t.notOk(valid, 'should not verify');
     t.end();
   });
@@ -221,6 +221,18 @@ test('jws.decode: with a bogus header ', function (t) {
   t.end();
 });
 
+test('jws.decode: missing algo in header', function (t) {
+  const header = Buffer('{"something":"not an algo"}').toString('base64');
+  const payload = Buffer('sup').toString('base64');
+  const sig = header + '.' + payload + '.';
+  try { jws.verify(sig, 'whatever') }
+  catch (e) {
+    t.same(e.code, 'MISSING_ALGORITHM');
+  }
+  t.end();
+});
+
+
 test('jws.isValid', function (t) {
   const valid = jws.sign({ header: { alg: 'hs256' }, payload: 'hi', secret: 'shhh' });
   const invalid = (function(){
@@ -233,4 +245,3 @@ test('jws.isValid', function (t) {
   t.same(jws.isValid(valid), true);
   t.end();
 });
-

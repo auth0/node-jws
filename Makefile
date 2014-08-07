@@ -1,8 +1,8 @@
 verbose: test/keys
-	@node test/*.test.js	
+	@node test/*.test.js
 
 test: test/keys
-	@./node_modules/.bin/tap test/*.test.js
+	@./node_modules/.bin/tape test/*.test.js
 
 test/keys:
 	@openssl genrsa 2048 > test/rsa-private.pem

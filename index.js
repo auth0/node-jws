@@ -56,9 +56,20 @@ function securedInputFromJWS(jwsSig) {
 }
 
 function algoFromJWS(jwsSig) {
+  var err;
   const header = headerFromJWS(jwsSig);
   if (typeof header != 'object') {
-    throw new Error("Invalid token: no header in signature '" + jwsSig + "'");
+    err = new Error("Invalid token: no header in signature '" + jwsSig + "'");
+    err.code = "MISSING_HEADER";
+    err.signature = jwsSig;
+    throw err;
+  }
+  if (!header.alg) {
+    err = new Error("Missing `alg` field in header for signature '"+ jwsSig +"'");
+    err.code = "MISSING_ALGORITHM";
+    err.header = header;
+    err.signature = jwsSig;
+    throw err;
   }
   return header.alg;
 }
