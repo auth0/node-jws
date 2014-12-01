@@ -82,7 +82,7 @@ function payloadFromJWS(jwsSig) {
   return new Buffer(payload, 'base64').toString('binary');
 }
 
-const JWS_REGEX = /^([a-zA-Z0-9\-_]+=*)?\.([a-zA-Z0-9\-_]+=*)?\.([a-zA-Z0-9\-_]+=*)?$/;
+const JWS_REGEX = /^([a-zA-Z0-9\/\+]+=*)?\.([a-zA-Z0-9\/\+]+=*)?\.([a-zA-Z0-9\-_]+)?$/;
 function isValidJws(string) {
   if (!JWS_REGEX.test(string))
     return false;
