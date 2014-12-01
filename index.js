@@ -79,7 +79,7 @@ function signatureFromJWS(jwsSig) {
 
 function payloadFromJWS(jwsSig) {
   const payload = jwsSig.split('.')[1];
-  return base64url.decode(payload);
+  return new Buffer(payload, 'base64').toString('binary');
 }
 
 const JWS_REGEX = /^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$/;
