@@ -41,7 +41,7 @@ const CURVES = {
 BITS.forEach(function (bits) {
   test('HMAC using SHA-'+bits+' hash algorithm', function (t) {
     const header = { alg: 'HS'+bits, typ: 'JWT' };
-    const payload = {name: 'oh hey', value: ['one', 2, 3]};
+    const payload = {name: 'oh hey José!', value: ['one', 2, 3]};
     const secret = 'sup';
     const jwsObj = jws.sign({
       header: header,
@@ -60,7 +60,7 @@ BITS.forEach(function (bits) {
 BITS.forEach(function (bits) {
   test('RSASSA using SHA-'+bits+' hash algorithm', function (t) {
     const header = { alg: 'RS'+bits };
-    const payload = {name: 'oh hey', value: ['one', 2, 3]};
+    const payload = {name: 'oh hey José!', value: ['one', 2, 3]};
     const privateKey = rsaPrivateKey;
     const publicKey = rsaPublicKey;
     const wrongPublicKey = rsaWrongPublicKey;
@@ -82,7 +82,7 @@ BITS.forEach(function (bits) {
   const curve = CURVES[bits];
   test('ECDSA using P-'+curve+' curve and SHA-'+bits+' hash algorithm', function (t) {
     const header = { alg: 'ES'+bits };
-    const payload = 'oh hey';
+    const payload = 'oh hey José!';
     const privateKey = ecdsaPrivateKey['256'];
     const publicKey = ecdsaPublicKey['256'];
     const wrongPublicKey = ecdsaWrongPublicKey['256'];
@@ -102,7 +102,7 @@ BITS.forEach(function (bits) {
 
 test('No digital signature or MAC value included', function (t) {
   const header = { alg: 'none' };
-  const payload = 'oh hey';
+  const payload = 'oh hey José!';
   const jwsObj = jws.sign({
     header: header,
     payload: payload,
@@ -213,7 +213,7 @@ test('jws.decode: not a jws signature', function (t) {
 });
 
 test('jws.decode: with a bogus header ', function (t) {
-  const header = Buffer('oh hei').toString('base64');
+  const header = Buffer('oh hei José!').toString('base64');
   const payload = Buffer('sup').toString('base64');
   const sig = header + '.' + payload + '.';
   const parts = jws.decode(sig);
@@ -236,7 +236,7 @@ test('jws.decode: missing algo in header', function (t) {
 test('jws.isValid', function (t) {
   const valid = jws.sign({ header: { alg: 'hs256' }, payload: 'hi', secret: 'shhh' });
   const invalid = (function(){
-    const header = Buffer('oh hei').toString('base64');
+    const header = Buffer('oh hei José!').toString('base64');
     const payload = Buffer('sup').toString('base64');
     return header + '.' + payload + '.';
   })();

@@ -20,8 +20,8 @@ function toString(obj) {
 }
 
 function jwsSecuredInput(header, payload) {
-  const encodedHeader = base64url(toString(header));
-  const encodedPayload = base64url(toString(payload));
+  const encodedHeader = base64url(toString(header), 'binary');
+  const encodedPayload = base64url(toString(payload), 'binary');
   return util.format('%s.%s', encodedHeader, encodedPayload);
 }
 
@@ -48,7 +48,7 @@ function safeJsonParse(thing) {
 
 function headerFromJWS(jwsSig) {
   const encodedHeader = jwsSig.split('.', 1)[0];
-  return safeJsonParse(base64url.decode(encodedHeader));
+  return safeJsonParse(base64url.decode(encodedHeader, 'binary'));
 }
 
 function securedInputFromJWS(jwsSig) {
@@ -80,7 +80,7 @@ function signatureFromJWS(jwsSig) {
 
 function payloadFromJWS(jwsSig) {
   const payload = jwsSig.split('.')[1];
-  return base64url.decode(payload);
+  return base64url.decode(payload, 'binary');
 }
 
 const JWS_REGEX = /^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$/;
