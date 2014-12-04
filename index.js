@@ -2,6 +2,7 @@
 const Buffer = require('buffer').Buffer;
 const Stream = require('stream');
 const util = require('util');
+const base64url = require('base64url');
 const jwa = require('jwa');
 
 const ALGORITHMS = [
@@ -19,8 +20,8 @@ function toString(obj) {
 }
 
 function jwsSecuredInput(header, payload) {
-  const encodedHeader = new Buffer(toString(header), 'binary').toString('base64');
-  const encodedPayload = new Buffer(toString(payload), 'binary').toString('base64');
+  const encodedHeader = base64url(toString(header));
+  const encodedPayload = base64url(toString(payload));
   return util.format('%s.%s', encodedHeader, encodedPayload);
 }
 
@@ -47,7 +48,7 @@ function safeJsonParse(thing) {
 
 function headerFromJWS(jwsSig) {
   const encodedHeader = jwsSig.split('.', 1)[0];
-  return safeJsonParse(new Buffer(encodedHeader, 'base64').toString('binary'));
+  return safeJsonParse(base64url.decode(encodedHeader));
 }
 
 function securedInputFromJWS(jwsSig) {
@@ -79,10 +80,10 @@ function signatureFromJWS(jwsSig) {
 
 function payloadFromJWS(jwsSig) {
   const payload = jwsSig.split('.')[1];
-  return new Buffer(payload, 'base64').toString('binary');
+  return base64url.decode(payload);
 }
 
-const JWS_REGEX = /^([a-zA-Z0-9\/\+]+=*)?\.([a-zA-Z0-9\/\+]+=*)?\.([a-zA-Z0-9\-_]+)?$/;
+const JWS_REGEX = /^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$/;
 function isValidJws(string) {
   if (!JWS_REGEX.test(string))
     return false;
