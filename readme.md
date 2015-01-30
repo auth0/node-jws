@@ -43,6 +43,7 @@ Options:
 * `header`
 * `payload`
 * `secret` or `privateKey`
+* `encoding` (Optional, defaults to 'utf8')
 
 `header` must be an object with an `alg` property. `header.alg` must be
 one a value found in `jws.ALGORITHMS`. See above for a table of
@@ -92,6 +93,7 @@ Options:
 * `header` (required)
 * `payload`
 * `key` || `privateKey` || `secret`
+* `encoding` (Optional, defaults to 'utf8')
 
 Other than `header`, all options expect a string or a buffer when the
 value is known ahead of time, or a stream for convenience.
@@ -126,6 +128,7 @@ Options:
 
 * `signature`
 * `key` || `publicKey` || `secret`
+* `encoding` (Optional, defaults to 'utf8')
 
 All options expect a string or a buffer when the value is known ahead of
 time, or a stream for convenience.
@@ -214,7 +217,7 @@ passed a `key` or `secret` option to the constructor.
 MIT
 
 ```
-Copyright (c) 2013 Brian J. Brennan
+Copyright (c) 2013-2015 Brian J. Brennan
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the

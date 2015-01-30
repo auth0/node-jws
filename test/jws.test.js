@@ -38,15 +38,21 @@ const CURVES = {
   '512': '521',
 };
 
+const payloadString = 'oh ćhey José!: ¬˚∆ƒå¬ß…©…åˆø˙ˆø´∆¬˚µ…˚¬˜øå…ˆßøˆƒ˜¬';
+const payload = {
+  name: payloadString,
+  value: ['one', 2, 3]
+};
+
 BITS.forEach(function (bits) {
   test('HMAC using SHA-'+bits+' hash algorithm', function (t) {
     const header = { alg: 'HS'+bits, typ: 'JWT' };
-    const payload = {name: 'oh hey José!', value: ['one', 2, 3]};
     const secret = 'sup';
     const jwsObj = jws.sign({
       header: header,
       payload: payload,
-      secret: secret
+      secret: secret,
+      encoding: 'utf8',
     });
     const parts = jws.decode(jwsObj);
     t.ok(jws.verify(jwsObj, secret), 'should verify');
@@ -60,7 +66,6 @@ BITS.forEach(function (bits) {
 BITS.forEach(function (bits) {
   test('RSASSA using SHA-'+bits+' hash algorithm', function (t) {
     const header = { alg: 'RS'+bits };
-    const payload = {name: 'oh hey José!', value: ['one', 2, 3]};
     const privateKey = rsaPrivateKey;
     const publicKey = rsaPublicKey;
     const wrongPublicKey = rsaWrongPublicKey;
@@ -82,19 +87,18 @@ BITS.forEach(function (bits) {
   const curve = CURVES[bits];
   test('ECDSA using P-'+curve+' curve and SHA-'+bits+' hash algorithm', function (t) {
     const header = { alg: 'ES'+bits };
-    const payload = 'oh hey José!';
     const privateKey = ecdsaPrivateKey['256'];
     const publicKey = ecdsaPublicKey['256'];
     const wrongPublicKey = ecdsaWrongPublicKey['256'];
     const jwsObj = jws.sign({
       header: header,
-      payload: payload,
+      payload: payloadString,
       privateKey: privateKey
     });
     const parts = jws.decode(jwsObj);
     t.ok(jws.verify(jwsObj, publicKey), 'should verify');
     t.notOk(jws.verify(jwsObj, wrongPublicKey), 'should not verify');
-    t.same(parts.payload, payload, 'should match payload');
+    t.same(parts.payload, payloadString, 'should match payload');
     t.same(parts.header, header, 'should match header');
     t.end();
   });
