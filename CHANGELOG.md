@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
   is for them. (<code>[6b6de48]</code>)
 
 [unreleased]: https://github.com/brianloveswords/node-jws/compare/v2.0.0...HEAD
-[2.0.0]: https://github.com/olivierlacan/keep-a-changelog/compare/v2.0.0...v1.0.1
+[2.0.0]: https://github.com/brianloveswords/node-jws/compare/v1.0.1...v2.0.0
 
 [7880050]: https://github.com/brianloveswords/node-jws/commit/7880050
 [6b6de48]: https://github.com/brianloveswords/node-jws/commit/6b6de48
