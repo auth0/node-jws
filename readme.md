@@ -62,14 +62,17 @@ const signature = jws.sign({
 });
 ```
 
-## jws.verify(signature, secretOrKey)
+## jws.verify(signature, algorithm, secretOrKey)
 
 (Synchronous) Returns`true` or `false` for whether a signature matches a
 secret or key.
 
-`signature` is a JWS Signature. `secretOrKey` is a string or
+`signature` is a JWS Signature. `header.alg` must be a value found in `jws.ALGORITHMS`.
+See above for a table of supported algorithms. `secretOrKey` is a string or
 buffer containing either the secret for HMAC algorithms, or the PEM
 encoded public key for RSA and ECDSA.
+
+Note that the `"alg"` value from the signature header is ignored.
 
 
 ## jws.decode(signature)
@@ -127,6 +130,7 @@ Returns a new VerifyStream object.
 Options:
 
 * `signature`
+* `algorithm`
 * `key` || `publicKey` || `secret`
 * `encoding` (Optional, defaults to 'utf8')
 

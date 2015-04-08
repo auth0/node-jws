@@ -1,6 +1,16 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [3.0.0]
+### Changed
+- **BREAKING**: `jwt.verify` now requires an `algorithm` parameter, and
+  `jws.createVerify` requires an `algorithm` option. The `"alg"` field
+  signature headers is ignored. This mitigates a critical security flaw
+  in the library which would allow an attacker to generate signatures with
+  arbitrary contents that would be accepted by `jwt.verify`. See
+  https://auth0.com/blog/2015/03/31/critical-vulnerabilities-in-json-web-token-libraries/
+  for details.
+
 ## [2.0.0] - 2015-01-30
 ### Changed
 - **BREAKING**: Default payload encoding changed from `binary` to
