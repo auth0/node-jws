@@ -92,9 +92,9 @@ BITS.forEach(function (bits) {
   test('ECDSA using P-'+curve+' curve and SHA-'+bits+' hash algorithm', function (t) {
     const alg = 'ES'+bits;
     const header = { alg: alg };
-    const privateKey = ecdsaPrivateKey['256'];
-    const publicKey = ecdsaPublicKey['256'];
-    const wrongPublicKey = ecdsaWrongPublicKey['256'];
+    const privateKey = ecdsaPrivateKey[bits];
+    const publicKey = ecdsaPublicKey[bits];
+    const wrongPublicKey = ecdsaWrongPublicKey[bits];
     const jwsObj = jws.sign({
       header: header,
       payload: payloadString,
