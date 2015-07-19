@@ -249,6 +249,19 @@ test('jws.decode: with a bogus header ', function (t) {
   t.end();
 });
 
+test('jws.decode: with encoding option', function (t) {
+  var payload = new Buffer(1);
+  payload.writeUInt8(10, 0);
+
+  const sig = jws.sign({ header: { alg: 'none' }, payload: payload.toString('base64'), encoding: 'base64' });
+
+  const decoded = jws.decode(sig, { encoding: 'hex' });
+
+  t.same(decoded.payload, '0a');
+
+  t.end();
+});
+
 test('jws.verify: missing or invalid algorithm', function (t) {
   const header = Buffer('{"something":"not an algo"}').toString('base64');
   const payload = Buffer('sup').toString('base64');
