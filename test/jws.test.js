@@ -234,6 +234,21 @@ test('jws.decode: with a bogus header ', function (t) {
   t.end();
 });
 
+test('jws.decode: non url-safe base64', function (t) {
+  const urlSafe = jws.sign({ header: { alg: 'hs256' }, payload: 'hi', secret: 'shh' });
+  const notSafe = urlSafe.split('.').map(function (safe) {
+    return new Buffer(safe, 'base64').toString('base64');
+  }).join('.');
+
+  const safeDecoded = jws.decode(urlSafe);
+  const notSafeDecoded = jws.decode(notSafe);
+
+  t.same(notSafeDecoded, safeDecoded);
+  t.notSame(notSafeDecoded, null);
+
+  t.end();
+});
+
 test('jws.verify: missing or invalid algorithm', function (t) {
   const header = Buffer('{"something":"not an algo"}').toString('base64');
   const payload = Buffer('sup').toString('base64');
