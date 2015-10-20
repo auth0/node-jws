@@ -44,13 +44,14 @@ Options:
 * `payload`
 * `secret` or `privateKey`
 * `encoding` (Optional, defaults to 'utf8')
+* `algorithm` (Optional)
 
-`header` must be an object with an `alg` property. `header.alg` must be
-one a value found in `jws.ALGORITHMS`. See above for a table of
-supported algorithms.
+`header` must be an object with an `alg` property. `header.alg` must be one a value found in `jws.ALGORITHMS` unless `algorithm` is specified. See above for a table of supported algorithms.
 
 If `payload` is not a buffer or a string, it will be coerced into a string
 using `JSON.stringify`.
+
+If `algorithm` is specified, it must be an object with a `sign` property. `sign` must be a function that takes an input and a key, and return a signature. Use this option to specify a custom signing algorithm.
 
 Example
 
@@ -67,10 +68,12 @@ const signature = jws.sign({
 (Synchronous) Returns`true` or `false` for whether a signature matches a
 secret or key.
 
-`signature` is a JWS Signature. `header.alg` must be a value found in `jws.ALGORITHMS`.
+`signature` is a JWS Signature. `header.alg` must be a value found in `jws.ALGORITHMS` unless `algorithm` is a function.
 See above for a table of supported algorithms. `secretOrKey` is a string or
 buffer containing either the secret for HMAC algorithms, or the PEM
 encoded public key for RSA and ECDSA.
+
+If `algorithm` is an object, it must contain a `verify` property. `verify` must be a function that takes an input, signature, and a key, and returns a boolean (true if the signature matches, false otherwise).
 
 Note that the `"alg"` value from the signature header is ignored.
 
