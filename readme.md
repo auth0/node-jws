@@ -100,9 +100,9 @@ Options:
 * `payload`
 * `key` || `privateKey` || `secret`
 * `encoding` (Optional, defaults to 'utf8')
+* `algorithm` (Optional)
 
-Other than `header`, all options expect a string or a buffer when the
-value is known ahead of time, or a stream for convenience.
+Other than `header` and `algorithm`, all options expect a string or a buffer when the value is known ahead of time, or a stream for convenience.
 
 Example
 ```js
@@ -138,7 +138,7 @@ Options:
 * `encoding` (Optional, defaults to 'utf8')
 
 All options expect a string or a buffer when the value is known ahead of
-time, or a stream for convenience.
+time, or a stream for convenience. The `algorithm` option may be an object, in which case it must contain a `verify` property.
 
 Example
 ```js

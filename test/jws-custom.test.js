@@ -1,18 +1,23 @@
 /*global process*/
 const test = require('tape');
+const fs = require('fs');
 const jws = require('..');
+
+function readstream(path) {
+  return fs.createReadStream(__dirname + '/' + path);
+}
 
 /* Custom signing algorithm that is only intended to be used for
  * these tests.
  */
 const algorithm = {
-  sign: function(input, key) { return Array(key+1).join('hi'); },
+  sign: function(input, key) { return Array(parseInt(key)+1).join('hi'); },
   verify: function(input, sig, key) {
-    return sig === Array(key+1).join('hi');
+    return sig === Array(parseInt(key)+1).join('hi');
   }
 };
 
-test('jws-custom.roundtrip', function (t) {
+test('jws-custom.sync', function (t) {
   const opts = {
     header: {alg: 'some-custom-algorithm'},
     payload: 'hello',
@@ -31,4 +36,23 @@ test('jws-custom.roundtrip', function (t) {
   t.same(parts.signature, 'hihihi');
 
   t.end();
+});
+
+test('jws-custom.stream', function (t) {
+  const dataStream = readstream('data.txt');
+  const opts = {
+    header: {alg: 'some-custom-algorithm'},
+    payload: dataStream,
+    secret: '5',
+    algorithm: algorithm
+  };
+
+  const sigStream = jws.createSign(opts);
+  const verifier = jws.createVerify({algorithm: opts.algorithm, key: '5'});
+  sigStream.pipe(verifier.signature);
+
+  verifier.on('done', function(valid) {
+    t.ok(valid, 'should verify');
+    t.end();
+  });
 });
