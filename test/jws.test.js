@@ -218,6 +218,22 @@ test('Streaming verify: ECDSA, with invalid key', function (t) {
   });
 });
 
+test('Streaming verify: errors during verify should emit as "error"', function (t) {
+  const verifierShouldError = jws.createVerify({
+    algorithm: 'ES512',
+    signature: 'a.b.c', // the short/invalid length signature will make jwa throw
+    publicKey: 'invalid-key-will-make-crypto-throw'
+  });
+
+  verifierShouldError.on('done', function () {
+    t.fail();
+    t.end();
+  });
+  verifierShouldError.on('error', function () {
+    t.end()
+  });
+});
+
 test('jws.decode: not a jws signature', function (t) {
   t.same(jws.decode('some garbage string'), null);
   t.same(jws.decode('http://sub.domain.org'), null);
