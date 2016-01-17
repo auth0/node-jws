@@ -58,7 +58,6 @@ BITS.forEach(function (bits) {
     const parts = jws.decode(jwsObj);
     t.ok(jws.verify(jwsObj, alg, secret), 'should verify');
     t.notOk(jws.verify(jwsObj, alg, 'something else'), 'should not verify with non-matching secret');
-    t.notOk(jws.verify(jwsObj, 'RS'+bits, secret), 'should not verify with non-matching algorithm');
     t.same(parts.payload, payload, 'should match payload');
     t.same(parts.header, header, 'should match header');
     t.end();
