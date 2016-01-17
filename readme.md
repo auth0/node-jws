@@ -100,6 +100,8 @@ Options:
 
 Other than `header`, all options expect a string or a buffer when the
 value is known ahead of time, or a stream for convenience.
+`key`/`privateKey`/`secret` may also be an object when using an encrypted
+private key, see the [crypto documentation][encrypted-key-docs].
 
 Example
 ```js
@@ -242,3 +244,5 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
+
+[encrypted-key-docs]: https://nodejs.org/api/crypto.html#crypto_sign_sign_private_key_output_format

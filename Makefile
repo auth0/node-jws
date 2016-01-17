@@ -21,6 +21,8 @@ test/keys:
 	@openssl ec -in test/ec384-wrong-private.pem -pubout > test/ec384-wrong-public.pem
 	@openssl ec -in test/ec512-private.pem -pubout > test/ec512-public.pem
 	@openssl ec -in test/ec512-wrong-private.pem -pubout > test/ec512-wrong-public.pem
+	@echo foo > test/encrypted-key-passphrase
+	@openssl rsa -passin file:test/encrypted-key-passphrase -in test/rsa-private.pem > test/rsa-private-encrypted.pem
 	@touch test/keys
 
 clean:

@@ -4,6 +4,9 @@ const fs = require('fs');
 const test = require('tape');
 const jws = require('..');
 
+const NODE_VERSION = require('semver').clean(process.version);
+const SUPPORTS_ENCRYPTED_KEYS = require('semver').gte(NODE_VERSION, '0.11.8');
+
 function readfile(path) {
   return fs.readFileSync(__dirname + '/' + path).toString();
 }
@@ -13,6 +16,8 @@ function readstream(path) {
 }
 
 const rsaPrivateKey = readfile('rsa-private.pem');
+const rsaPrivateKeyEncrypted = readfile('rsa-private-encrypted.pem');
+const encryptedPassphrase = readfile('encrypted-key-passphrase');
 const rsaPublicKey = readfile('rsa-public.pem');
 const rsaWrongPublicKey = readfile('rsa-wrong-public.pem');
 const ecdsaPrivateKey = {
@@ -233,6 +238,43 @@ test('Streaming verify: errors during verify should emit as "error"', function (
     t.end()
   });
 });
+
+if (SUPPORTS_ENCRYPTED_KEYS) {
+  test('Signing: should accept an encrypted key', function (t) {
+    const alg = 'RS256';
+    const signature = jws.sign({
+      header: { alg: alg },
+      payload: 'verifyme',
+      privateKey: {
+        key: rsaPrivateKeyEncrypted,
+        passphrase: encryptedPassphrase
+      }
+    });
+    t.ok(jws.verify(signature, 'RS256', rsaPublicKey));
+    t.end();
+  });
+
+  test('Streaming sign: should accept an encrypted key', function (t) {
+    const alg = 'RS256';
+    const signer = jws.createSign({
+      header: { alg: alg },
+      payload: 'verifyme',
+      privateKey: {
+        key: rsaPrivateKeyEncrypted,
+        passphrase: encryptedPassphrase
+      }
+    });
+    const verifier = jws.createVerify({
+      algorithm: alg,
+      signature: signer,
+      publicKey: rsaPublicKey
+    });
+    verifier.on('done', function (verified) {
+      t.ok(verified);
+      t.end();
+    });
+  });
+}
 
 test('jws.decode: not a jws signature', function (t) {
   t.same(jws.decode('some garbage string'), null);
