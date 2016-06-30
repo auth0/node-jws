@@ -69,6 +69,24 @@ BITS.forEach(function (bits) {
   });
 });
 
+BITS.forEach(function(bits) {
+  ['', Buffer('')].forEach(function(secret) {
+    test('HMAC using SHA'+bits+' and an empty secret', function(t) {
+      const alg = 'HS'+bits;
+      const sig = jws.sign({
+        header: {
+          alg: alg
+        },
+        payload: 'data',
+        secret: secret
+      });
+      const ok = jws.verify(sig, alg, secret);
+      t.ok(ok);
+      t.end();
+    });
+  });
+});
+
 BITS.forEach(function (bits) {
   test('RSASSA using SHA-'+bits+' hash algorithm', function (t) {
     const alg = 'RS'+bits;
@@ -142,6 +160,34 @@ test('Streaming sign: HMAC', function (t) {
   sig.on('done', function (signature) {
     t.ok(jws.verify(signature, 'HS256', secret), 'should verify');
     t.end();
+  });
+});
+
+BITS.forEach(function(bits) {
+  ['', Buffer('')].forEach(function(secret) {
+    test('Streaming HMAC using SHA'+bits+' and an empty secret', function(t) {
+			const alg = 'HS'+bits;
+      const sig = jws.createSign({
+        header: {
+          alg: alg
+        },
+        secret: secret,
+        payload: 'data'
+      });
+      const verify = jws.createVerify({
+        algorithm: alg,
+        secret: secret,
+        signature: sig
+      });
+
+      verify.on('done', function(ok) {
+        t.ok(ok);
+        t.end();
+      });
+
+      sig.on('error', t.fail);
+      verify.on('error', t.fail);
+    });
   });
 });
 
