@@ -291,6 +291,17 @@ test('jws.decode: with a bogus header ', function (t) {
   t.end();
 });
 
+test('jws.decode: with invalid json in body', function (t) {
+  const header = Buffer('{"alg":"HS256","typ":"JWT"}').toString('base64');
+  const payload = Buffer('sup').toString('base64');
+  const sig = header + '.' + payload + '.';
+  var parts;
+  t.throws(function () {
+    parts = jws.decode(sig);
+  })
+  t.end();
+});
+
 test('jws.verify: missing or invalid algorithm', function (t) {
   const header = Buffer('{"something":"not an algo"}').toString('base64');
   const payload = Buffer('sup').toString('base64');
