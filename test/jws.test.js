@@ -1,5 +1,5 @@
 /*global process*/
-const Buffer = require('buffer').Buffer;
+const Buffer = require('safe-buffer').Buffer;
 const fs = require('fs');
 const test = require('tape');
 const jws = require('..');
@@ -283,8 +283,8 @@ test('jws.decode: not a jws signature', function (t) {
 });
 
 test('jws.decode: with a bogus header ', function (t) {
-  const header = Buffer('oh hei José!').toString('base64');
-  const payload = Buffer('sup').toString('base64');
+  const header = Buffer.from('oh hei José!').toString('base64');
+  const payload = Buffer.from('sup').toString('base64');
   const sig = header + '.' + payload + '.';
   const parts = jws.decode(sig);
   t.same(parts, null);
@@ -292,8 +292,8 @@ test('jws.decode: with a bogus header ', function (t) {
 });
 
 test('jws.decode: with invalid json in body', function (t) {
-  const header = Buffer('{"alg":"HS256","typ":"JWT"}').toString('base64');
-  const payload = Buffer('sup').toString('base64');
+  const header = Buffer.from('{"alg":"HS256","typ":"JWT"}').toString('base64');
+  const payload = Buffer.from('sup').toString('base64');
   const sig = header + '.' + payload + '.';
   var parts;
   t.throws(function () {
@@ -303,8 +303,8 @@ test('jws.decode: with invalid json in body', function (t) {
 });
 
 test('jws.verify: missing or invalid algorithm', function (t) {
-  const header = Buffer('{"something":"not an algo"}').toString('base64');
-  const payload = Buffer('sup').toString('base64');
+  const header = Buffer.from('{"something":"not an algo"}').toString('base64');
+  const payload = Buffer.from('sup').toString('base64');
   const sig = header + '.' + payload + '.';
   try { jws.verify(sig) }
   catch (e) {
@@ -321,8 +321,8 @@ test('jws.verify: missing or invalid algorithm', function (t) {
 test('jws.isValid', function (t) {
   const valid = jws.sign({ header: { alg: 'hs256' }, payload: 'hi', secret: 'shhh' });
   const invalid = (function(){
-    const header = Buffer('oh hei José!').toString('base64');
-    const payload = Buffer('sup').toString('base64');
+    const header = Buffer.from('oh hei José!').toString('base64');
+    const payload = Buffer.from('sup').toString('base64');
     return header + '.' + payload + '.';
   })();
   t.same(jws.isValid('http://sub.domain.org'), false);
