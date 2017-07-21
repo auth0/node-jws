@@ -330,3 +330,16 @@ test('jws.isValid', function (t) {
   t.same(jws.isValid(valid), true);
   t.end();
 });
+
+test('#50 mangled binary payload', function(t) {
+  const sig = jws.sign({
+    header: {
+      alg: 'HS256'
+    },
+    payload: new Buffer('TkJyotZe8NFpgdfnmgINqg==', 'base64'),
+    secret: new Buffer('8NRxgIkVxP8LyyXSL4b1dg==', 'base64')
+  });
+
+  t.same(sig, 'eyJhbGciOiJIUzI1NiJ9.TkJyotZe8NFpgdfnmgINqg.9XilaLN_sXqWFtlUCdAlGI85PCEbJZSIQpakyAle-vo');
+  t.end();
+});
