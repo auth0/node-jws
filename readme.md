@@ -6,7 +6,7 @@ This was developed against `draft-ietf-jose-json-web-signature-08` and
 implements the entire spec **except** X.509 Certificate Chain
 signing/verifying (patches welcome).
 
-There are both syncronous (`jws.sign`, `jws.verify`) and streaming
+There are both synchronous (`jws.sign`, `jws.verify`) and streaming
 (`jws.createSign`, `jws.createVerify`) APIs.
 
 # Install
@@ -18,6 +18,7 @@ $ npm install jws
 # Usage
 
 ## jws.ALGORITHMS
+
 Array of supported algorithms. The following algorithms are currently supported.
 
 alg Parameter Value | Digital Signature or MAC Algorithm
@@ -35,7 +36,6 @@ ES256 | ECDSA using P-256 curve and SHA-256 hash algorithm
 ES384 | ECDSA using P-384 curve and SHA-384 hash algorithm
 ES512 | ECDSA using P-521 curve and SHA-512 hash algorithm
 none | No digital signature or MAC value included
-
 
 ## jws.sign(options)
 
@@ -67,7 +67,7 @@ const signature = jws.sign({
 
 ## jws.verify(signature, algorithm, secretOrKey)
 
-(Synchronous) Returns`true` or `false` for whether a signature matches a
+(Synchronous) Returns `true` or `false` for whether a signature matches a
 secret or key.
 
 `signature` is a JWS Signature. `header.alg` must be a value found in `jws.ALGORITHMS`.
@@ -92,6 +92,7 @@ Returns an object with three properties, e.g.
 ```
 
 ## jws.createSign(options)
+
 Returns a new SignStream object.
 
 Options:
@@ -106,7 +107,8 @@ value is known ahead of time, or a stream for convenience.
 `key`/`privateKey`/`secret` may also be an object when using an encrypted
 private key, see the [crypto documentation][encrypted-key-docs].
 
-Example
+Example:
+
 ```js
 
 // This...
@@ -118,7 +120,7 @@ jws.createSign({
   // ...
 });
 
-// is equivilant to this:
+// is equivalent to this:
 const signer = jws.createSign({
   header: { alg: 'RS256' },
 });
@@ -130,6 +132,7 @@ signer.on('done', function(signature) {
 ```
 
 ## jws.createVerify(options)
+
 Returns a new VerifyStream object.
 
 Options:
@@ -142,7 +145,8 @@ Options:
 All options expect a string or a buffer when the value is known ahead of
 time, or a stream for convenience.
 
-Example
+Example:
+
 ```js
 
 // This...
@@ -163,8 +167,9 @@ verifier.on('done', function(verified, obj) {
 ```
 
 ## Class: SignStream
-A `Readable Stream` that emits a single data event, the calculated
-signature, when done.
+
+A `Readable Stream` that emits a single data event (the calculated
+signature) when done.
 
 ### Event: 'done'
 `function (signature) { }`
@@ -174,7 +179,7 @@ signature, when done.
 A `Writable Stream` that expects the JWS payload. Do *not* use if you
 passed a `payload` option to the constructor.
 
-Example
+Example:
 
 ```js
 payloadStream.pipe(signer.payload);
@@ -203,6 +208,7 @@ of whether or not that signature was valid.
 `valid` is a boolean for whether or not the signature is valid.
 
 ### verifier.signature
+
 A `Writable Stream` that expects a JWS Signature. Do *not* use if you
 passed a `signature` option to the constructor.
 
@@ -211,7 +217,6 @@ passed a `signature` option to the constructor.
 A `Writable Stream` that expects a public key or secret. Do *not* use if you
 passed a `key` or `secret` option to the constructor.
 
-
 # TODO
 
 * It feels like there should be some convenience options/APIs for
@@ -219,7 +224,6 @@ passed a `key` or `secret` option to the constructor.
   with `{ alg: 'ES512' }` or whatever every time.
 
 * X.509 support, ugh
-
 
 # License
 
