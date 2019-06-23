@@ -343,3 +343,11 @@ test('#50 mangled binary payload', function(t) {
   t.same(sig, 'eyJhbGciOiJIUzI1NiJ9.TkJyotZe8NFpgdfnmgINqg.9XilaLN_sXqWFtlUCdAlGI85PCEbJZSIQpakyAle-vo');
   t.end();
 });
+
+test('jws.decode supports encoding option', function (t) {
+  const payloadString = 'åäöí';
+  const jwsObj = jws.sign({ header: { alg: 'hs256' }, payload: payloadString, secret: 'shhh', encoding: "latin1" });
+  const parts = jws.decode(jwsObj, {encoding: "latin1"});
+  t.same(parts.payload, payloadString, 'should match payload');
+  t.end();
+});
