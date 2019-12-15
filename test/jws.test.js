@@ -319,7 +319,7 @@ test('jws.verify: missing or invalid algorithm', function (t) {
 
 
 test('jws.isValid', function (t) {
-  const valid = jws.sign({ header: { alg: 'hs256' }, payload: 'hi', secret: 'shhh' });
+  const valid = jws.sign({ header: { alg: 'HS256' }, payload: 'hi', secret: 'shhh' });
   const invalid = (function(){
     const header = Buffer.from('oh hei José!').toString('base64');
     const payload = Buffer.from('sup').toString('base64');
