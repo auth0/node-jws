@@ -279,6 +279,7 @@ if (SUPPORTS_ENCRYPTED_KEYS) {
 test('jws.decode: not a jws signature', function (t) {
   t.same(jws.decode('some garbage string'), null);
   t.same(jws.decode('http://sub.domain.org'), null);
+  t.same(jws.decode('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e3.t-IDcSemACt8x4iTMCda8Yhe3iZaWbvV5XKSTbuAn0M'), null);
   t.end();
 });
 
@@ -295,10 +296,8 @@ test('jws.decode: with invalid json in body', function (t) {
   const header = Buffer.from('{"alg":"HS256","typ":"JWT"}').toString('base64');
   const payload = Buffer.from('sup').toString('base64');
   const sig = header + '.' + payload + '.';
-  var parts;
-  t.throws(function () {
-    parts = jws.decode(sig);
-  })
+  const parts = jws.decode(sig);
+  t.same(parts, null);
   t.end();
 });
 
