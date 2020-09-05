@@ -295,9 +295,8 @@ test('jws.decode: with invalid json in body', function (t) {
   const header = Buffer.from('{"alg":"HS256","typ":"JWT"}').toString('base64');
   const payload = Buffer.from('sup').toString('base64');
   const sig = header + '.' + payload + '.';
-  var parts;
   t.throws(function () {
-    parts = jws.decode(sig);
+    jws.decode(sig);
   })
   t.end();
 });
