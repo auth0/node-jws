@@ -235,7 +235,7 @@ test('Streaming verify: errors during verify should emit as "error"', function (
     t.end();
   });
   verifierShouldError.on('error', function () {
-    t.end()
+    t.end();
   });
 });
 
@@ -297,7 +297,7 @@ test('jws.decode: with invalid json in body', function (t) {
   const sig = header + '.' + payload + '.';
   t.throws(function () {
     jws.decode(sig);
-  })
+  });
   t.end();
 });
 
