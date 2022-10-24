@@ -70,7 +70,7 @@ const signature = jws.sign({
 (Synchronous) Returns `true` or `false` for whether a signature matches a
 secret or key.
 
-`signature` is a JWS Signature. `header.alg` must be a value found in `jws.ALGORITHMS`.
+`signature` is a JWS Signature. `algorithm` must be a value found in `jws.ALGORITHMS`.
 See above for a table of supported algorithms. `secretOrKey` is a string or
 buffer containing either the secret for HMAC algorithms, or the PEM
 encoded public key for RSA and ECDSA.
