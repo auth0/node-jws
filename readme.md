@@ -39,7 +39,7 @@ none | No digital signature or MAC value included
 
 ## jws.sign(options)
 
-(Synchronous) Return a JSON Web Signature for a header and a payload.
+Return a JSON Web Signature for a header and a payload.
 
 Options:
 
@@ -47,6 +47,7 @@ Options:
 * `payload`
 * `secret` or `privateKey`
 * `encoding` (Optional, defaults to 'utf8')
+* `jwa` (Optional, a JWA lookup function - see below)
 
 `header` must be an object with an `alg` property. `header.alg` must be
 one a value found in `jws.ALGORITHMS`. See above for a table of
@@ -58,24 +59,38 @@ using `JSON.stringify`.
 Example
 
 ```js
-const signature = jws.sign({
+jws.sign({
+  header: { alg: 'HS256' },
+  payload: 'h. jon benjamin',
+  secret: 'has a van',
+}).then(function (signature) {
+    // ...
+});
+```
+
+or
+
+```js
+const signature = await jws.sign({
   header: { alg: 'HS256' },
   payload: 'h. jon benjamin',
   secret: 'has a van',
 });
 ```
 
-## jws.verify(signature, algorithm, secretOrKey)
+## jws.verify(signature, algorithm, secretOrKey, opts)
 
-(Synchronous) Returns `true` or `false` for whether a signature matches a
+Returns a Promise that resolves to `true` or `false` for whether a signature matches a
 secret or key.
 
-`signature` is a JWS Signature. `header.alg` must be a value found in `jws.ALGORITHMS`.
+`signature` is a JWS Signature. `algorithm` must be a value found in `jws.ALGORITHMS`.
 See above for a table of supported algorithms. `secretOrKey` is a string or
 buffer containing either the secret for HMAC algorithms, or the PEM
 encoded public key for RSA and ECDSA.
 
-Note that the `"alg"` value from the signature header is ignored.
+`opts` is optional and accepts a `jwa` (a JWA lookup function - see below).
+
+Note that the `alg` value from the signature header is ignored.
 
 
 ## jws.decode(signature)
@@ -101,6 +116,7 @@ Options:
 * `payload`
 * `key` || `privateKey` || `secret`
 * `encoding` (Optional, defaults to 'utf8')
+* `jwa` (Optional, a JWA lookup function - see below)
 
 Other than `header`, all options expect a string or a buffer when the
 value is known ahead of time, or a stream for convenience.
@@ -141,6 +157,7 @@ Options:
 * `algorithm`
 * `key` || `publicKey` || `secret`
 * `encoding` (Optional, defaults to 'utf8')
+* `jwa` (Optional, a JWA lookup function - see below)
 
 All options expect a string or a buffer when the value is known ahead of
 time, or a stream for convenience.
@@ -217,11 +234,45 @@ passed a `signature` option to the constructor.
 A `Writable Stream` that expects a public key or secret. Do *not* use if you
 passed a `key` or `secret` option to the constructor.
 
-# TODO
+## jwa configuration
 
-* It feels like there should be some convenience options/APIs for
-  defining the algorithm rather than having to define a header object
-  with `{ alg: 'ES512' }` or whatever every time.
+To support custom signing algorithms or crypto libraries, the `jwa` option prop can be supplied to
+`sign`/`verify`/`createSign`/`createVerify`. This must be a function that accepts the `algorith`
+name and returns an object with two properties (`verify` and `sign`), which return a boolean and a
+signature respectively - these can be Promises.
+
+eg:
+
+```js
+function jwaLookup(alg) {
+    if (alg === "CUSTOM") {
+        return {
+            verify: (data, signature, secret) => {
+                // ... do some crypto
+                if (valid) {
+                    return true;
+                }
+                return false;
+            },
+            sign: (data, secret) => {
+                // ... do some crypto
+                return signature;
+            },
+        };
+    }
+}
+
+jws.sign({
+    header: { alg: 'HS256' },
+    payload: 'h. jon benjamin',
+    secret: 'has a van',
+    jwa: jwaLookup,
+}).then(function (signature) {
+    // ...
+});
+```
+
+# TODO
 
 * X.509 support, ugh
 
