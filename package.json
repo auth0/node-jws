@@ -7,6 +7,7 @@
     "test": "test"
   },
   "scripts": {
+    "lint": "jshint lib/ test/ index.js",
     "test": "make test"
   },
   "repository": {
@@ -28,6 +29,7 @@
     "safe-buffer": "^5.0.1"
   },
   "devDependencies": {
+    "jshint": "^2.13.5",
     "semver": "^5.1.0",
     "tape": "~2.14.0"
   }
