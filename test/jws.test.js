@@ -301,6 +301,75 @@ test('jws.decode: with invalid json in body', function (t) {
   t.end();
 });
 
+test('jws.decode: with typ of \'JWT\' in header', function (t) {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const encoding = 'utf8';
+  const jwsObj = jws.sign({
+    header: header,
+    payload: payload,
+    secret: 'sup',
+    encoding: encoding,
+  });
+  const parts = jws.decode(jwsObj);
+  t.same(parts.payload, payload, 'should match JSON-parsed payload');
+  t.end();
+});
+
+test('jws.decode: with missing typ in header', function (t) {
+  const header = { alg: 'HS256' };
+  const jwsObj = jws.sign({
+    header: header,
+    payload: payload,
+    secret: 'sup',
+    encoding: 'utf8',
+  });
+  const parts = jws.decode(jwsObj);
+  t.same(parts.payload, JSON.stringify(payload), 'should match encoded payload');
+  t.not(parts.payload, payload, 'should not match JSON-parsed payload');
+  t.end();
+});
+
+test('jws.decode: with invalid typ in header', function (t) {
+  const header = { alg: 'HS256', typ: 'not a typ' };
+  const jwsObj = jws.sign({
+    header: header,
+    payload: payload,
+    secret: 'sup',
+    encoding: 'utf8',
+  });
+  const parts = jws.decode(jwsObj);
+  t.same(parts.payload, JSON.stringify(payload), 'should match encoded payload');
+  t.not(parts.payload, payload, 'should not match JSON-parsed payload');
+  t.end();
+});
+
+test('jws.decode: with missing typ in header, and json option set', function (t) {
+  const header = { alg: 'HS256' };
+  const jwsObj = jws.sign({
+    header: header,
+    payload: payload,
+    secret: 'sup',
+    encoding: 'utf8',
+  });
+  const parts = jws.decode(jwsObj, {json: true});
+  t.same(parts.payload, payload, 'should match JSON-parsed payload');
+  t.end();
+});
+
+test('jws.decode: with missing typ in header, and json option set to null', function (t) {
+  const header = { alg: 'HS256' };
+  const jwsObj = jws.sign({
+    header: header,
+    payload: payload,
+    secret: 'sup',
+    encoding: 'utf8',
+  });
+  const parts = jws.decode(jwsObj, {json: null});
+  t.same(parts.payload, JSON.stringify(payload), 'should match encoded payload');
+  t.not(parts.payload, payload, 'should not match JSON-parsed payload');
+  t.end();
+});
+
 test('jws.verify: missing or invalid algorithm', function (t) {
   const header = Buffer.from('{"something":"not an algo"}').toString('base64');
   const payload = Buffer.from('sup').toString('base64');
