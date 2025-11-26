@@ -2,3 +2,4 @@ node_modules
 /test/keys
 /test/*.pem
 /test/encrypted-key-passphrase
+package-lock.json
