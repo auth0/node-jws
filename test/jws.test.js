@@ -330,3 +330,119 @@ test('jws.isValid', function (t) {
   t.same(jws.isValid(valid), true);
   t.end();
 });
+
+test('Streaming sign: HMAC with empty secret buffer', function (t) {
+  const dataStream = readstream('data.txt');
+  const secret = Buffer.alloc(0);
+  const sig = jws.createSign({
+    header: { alg: 'HS256' },
+    secret: secret
+  });
+  dataStream.pipe(sig.payload);
+  sig.on('done', function (signature) {
+    t.ok(jws.verify(signature, 'HS256', secret), 'should verify');
+    t.end();
+  }).sign();
+});
+
+test('Streaming sign: HMAC with empty secret string', function (t) {
+  const dataStream = readstream('data.txt');
+  const secret = '';
+  const sig = jws.createSign({
+    header: { alg: 'HS256' },
+    secret: secret
+  });
+  dataStream.pipe(sig.payload);
+  sig.on('done', function (signature) {
+    t.ok(jws.verify(signature, 'HS256', secret), 'should verify');
+    t.end();
+  }).sign();
+});
+
+test('Streaming sign: HMAC with undefined secret', function (t) {
+  try {
+    jws.createSign({
+      header: { alg: 'HS256' },
+      secret: undefined
+    });
+    t.fail('should have errored');
+    t.end();
+  } catch (error) {
+    t.equal(error.name, 'TypeError');
+    t.equal(error.message, 'secret must be a string or buffer or a KeyObject');
+    t.end();
+  }
+});
+
+test('Streaming sign: HMAC with null secret', function (t) {
+  try {
+    jws.createSign({
+      header: { alg: 'HS256' },
+      secret: null
+    });
+    t.fail('should have errored');
+    t.end();
+  } catch (error) {
+    t.equal(error.name, 'TypeError');
+    t.equal(error.message, 'secret must be a string or buffer or a KeyObject');
+    t.end();
+  }
+});
+
+test('Streaming verify: HMAC with empty secret buffer', function (t) {
+  const secret = Buffer.alloc(0);
+  jws.createVerify({
+    signature: 'eyJhbGciOiJIUzI1NiJ9.b25lLCB0d28sIHRocmVlCg.V1oQ0aq6FgAoe7C2TORtYpQAbYzJoFNFZlJkTlF1e60',
+    algorithm: 'HS256',
+    secret: secret
+  }).on('done', function (valid, decoded) {
+    t.true(valid);
+    t.same(decoded.payload, readfile('data.txt'));
+    t.end();
+  }).verify();
+});
+
+test('Streaming verify: HMAC with empty secret string', function (t) {
+  const secret = '';
+  jws.createVerify({
+    signature: 'eyJhbGciOiJIUzI1NiJ9.b25lLCB0d28sIHRocmVlCg.V1oQ0aq6FgAoe7C2TORtYpQAbYzJoFNFZlJkTlF1e60',
+    algorithm: 'HS256',
+    secret: secret
+  }).on('done', function (valid, decoded) {
+    t.true(valid);
+    t.same(decoded.payload, readfile('data.txt'));
+    t.end();
+  }).verify();
+});
+
+test('Streaming verify: HMAC with undefined secret', function (t) {
+  try {
+    jws.createVerify({
+      signature: 'eyJhbGciOiJIUzI1NiJ9.b25lLCB0d28sIHRocmVlCg.V1oQ0aq6FgAoe7C2TORtYpQAbYzJoFNFZlJkTlF1e60',
+      algorithm: 'HS256',
+      secret: undefined
+    });
+    t.fail('should have errored');
+    t.end();
+  } catch (error) {
+    t.equal(error.name, 'TypeError');
+    t.equal(error.message, 'secret must be a string or buffer or a KeyObject');
+    t.end();
+  }
+});
+
+test('Streaming verify: HMAC with null secret', function (t) {
+  try {
+    jws.createVerify({
+      signature: 'eyJhbGciOiJIUzI1NiJ9.b25lLCB0d28sIHRocmVlCg.V1oQ0aq6FgAoe7C2TORtYpQAbYzJoFNFZlJkTlF1e60',
+      algorithm: 'HS256',
+      secret: null
+    });
+    t.fail('should have errored');
+    t.end();
+  } catch (error) {
+    t.equal(error.name, 'TypeError');
+    t.equal(error.message, 'secret must be a string or buffer or a KeyObject');
+    t.end();
+  }
+});
