@@ -301,6 +301,20 @@ test('jws.decode: with invalid json in body', function (t) {
   t.end();
 });
 
+test('jws.decode supports encoding option', function (t) {
+  const payloadString = 'åäöí';
+  const encoding = 'latin1';
+  const jwsObj = jws.sign({
+    header: { alg: 'HS256' },
+    payload: payloadString, 
+    secret: 'shhh', 
+    encoding: encoding
+  });
+  const parts = jws.decode(jwsObj, {encoding: encoding});
+  t.same(parts.payload, payloadString, 'should match payload');
+  t.end();
+});
+
 test('jws.verify: missing or invalid algorithm', function (t) {
   const header = Buffer.from('{"something":"not an algo"}').toString('base64');
   const payload = Buffer.from('sup').toString('base64');
@@ -315,7 +329,6 @@ test('jws.verify: missing or invalid algorithm', function (t) {
   }
   t.end();
 });
-
 
 test('jws.isValid', function (t) {
   const valid = jws.sign({ header: { alg: 'HS256' }, payload: 'hi', secret: 'shhh' });
