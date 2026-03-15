@@ -1,5 +1,4 @@
 /*global process*/
-const Buffer = require('safe-buffer').Buffer;
 const fs = require('fs');
 const test = require('tape');
 const jws = require('..');
