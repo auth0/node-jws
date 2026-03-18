@@ -7,11 +7,19 @@
     "test": "test"
   },
   "scripts": {
-    "test": "make test"
+    "test": "make test",
+    "prepare": "husky"
   },
+  "files": [
+    "index.js",
+    "lib",
+    "CHANGELOG.md",
+    "readme.md",
+    "LICENSE"
+  ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/brianloveswords/node-jws.git"
+    "url": "https://github.com/auth0/node-jws.git"
   },
   "keywords": [
     "jws",
@@ -28,6 +36,11 @@
     "safe-buffer": "^5.0.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.3.1",
+    "@commitlint/config-conventional": "^20.3.1",
+    "@semantic-release/exec": "^7.0.3",
+    "husky": "^9.1.7",
+    "semantic-release": "^25.0.2",
     "semver": "^5.1.0",
     "tape": "~2.14.0"
   }
