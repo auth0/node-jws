@@ -83,6 +83,10 @@ Note that the `"alg"` value from the signature header is ignored.
 (Synchronous) Returns the decoded header, decoded payload, and signature
 parts of the JWS Signature.
 
+Options:
+
+* `json` (Optional, defaults to `false`)
+
 Returns an object with three properties, e.g.
 ```js
 { header: { alg: 'HS256' },
@@ -141,9 +145,10 @@ Options:
 * `algorithm`
 * `key` || `publicKey` || `secret`
 * `encoding` (Optional, defaults to 'utf8')
+* `json` (Optional, defaults to `false`)
 
-All options expect a string or a buffer when the value is known ahead of
-time, or a stream for convenience.
+All options (except `encoding` and `json`) expect a string or a buffer 
+when the value is known ahead of time, or a stream for convenience.
 
 Example:
 
