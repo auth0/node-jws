@@ -20,6 +20,7 @@ const rsaPrivateKeyEncrypted = readfile('rsa-private-encrypted.pem');
 const encryptedPassphrase = readfile('encrypted-key-passphrase');
 const rsaPublicKey = readfile('rsa-public.pem');
 const rsaWrongPublicKey = readfile('rsa-wrong-public.pem');
+const undefinedKey = undefined;
 const ecdsaPrivateKey = {
   '256': readfile('ec256-private.pem'),
   '384': readfile('ec384-private.pem'),
@@ -65,6 +66,24 @@ BITS.forEach(function (bits) {
     t.notOk(jws.verify(jwsObj, alg, 'something else'), 'should not verify with non-matching secret');
     t.same(parts.payload, payload, 'should match payload');
     t.same(parts.header, header, 'should match header');
+    t.end();
+  });
+});
+
+BITS.forEach(function (bits) {
+  test('HMAC using SHA-'+bits+' hash algorithm undefined key test', function (t) {
+    const alg = 'HS'+bits;
+    const header = { alg: alg, typ: 'JWT' };
+    const secret = undefinedKey;
+    var parts;
+    t.throws(function () {
+      parts = jws.sign({
+      header: header,
+      payload: payload,
+      secret: secret,
+      encoding: 'utf8',
+      });
+    })
     t.end();
   });
 });
@@ -315,7 +334,6 @@ test('jws.verify: missing or invalid algorithm', function (t) {
   }
   t.end();
 });
-
 
 test('jws.isValid', function (t) {
   const valid = jws.sign({ header: { alg: 'HS256' }, payload: 'hi', secret: 'shhh' });
