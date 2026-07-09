@@ -83,6 +83,10 @@ Note that the `"alg"` value from the signature header is ignored.
 (Synchronous) Returns the decoded header, decoded payload, and signature
 parts of the JWS Signature.
 
+Options:
+
+* `encoding` (Optional, defaults to 'utf8')
+
 Returns an object with three properties, e.g.
 ```js
 { header: { alg: 'HS256' },
